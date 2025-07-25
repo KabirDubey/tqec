@@ -17,6 +17,7 @@ from tqec.compile.specs.library.generators.fixed_bulk import (
     FixedBulkConventionGenerator,
 )
 from tqec.compile.specs.library.y_half_cube import create_y_half_cube_block
+from tqec.compile.specs.library.y_half_cube import create_y_half_cube_block
 from tqec.computation.cube import Port, YHalfCube, ZXCube
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
@@ -32,6 +33,14 @@ _DEFAULT_BLOCK_REPETITIONS: Final[LinearFunction] = LinearFunction(2, -1)
 
 
 class FixedBulkCubeBuilder(CubeBuilder):
+    """Implementation of the :class:`~tqec.compile.specs.base.CubeBuilder`
+    interface for the fixed bulk convention.
+
+    This class provides an implementation following the fixed-bulk convention.
+    This convention consists in the fact that the top-left most plaquette in the
+    bulk always measures a known-basis stabilizer (Z-basis for this class).
+    """
+
     """Implementation of the :class:`~tqec.compile.specs.base.CubeBuilder`
     interface for the fixed bulk convention.
 
@@ -92,6 +101,9 @@ class FixedBulkCubeBuilder(CubeBuilder):
             if spec.y_half_cube_mode is None:
                 raise TQECError(f"Y Half Cube mode not determined for spec: {spec}")
             return create_y_half_cube_block(spec, spec.y_half_cube_mode)
+            if spec.y_half_cube_mode is None:
+                raise TQECError(f"Y Half Cube mode not determined for spec: {spec}")
+            return create_y_half_cube_block(spec, spec.y_half_cube_mode)
         # else
         template, (init, repeat, measure) = self._get_template_and_plaquettes(spec)
         layers: list[BaseLayer | BaseComposedLayer] = [
@@ -111,22 +123,25 @@ class FixedBulkPipeBuilder(PipeBuilder):
     bulk always measures a known-parity stabilizer (Z-basis for this class).
     """
 
+    """Implementation of the :class:`~tqec.compile.specs.base.PipeBuilder`
+    interface for the fixed bulk convention.
+
+    This class provides an implementation following the fixed-bulk convention.
+    This convention consists in the fact that the top-left most plaquette in the
+    bulk always measures a known-parity stabilizer (Z-basis for this class).
+    """
+
     def __init__(
         self,
         compiler: PlaquetteCompiler,
         translator: RPNGTranslator = DefaultRPNGTranslator(),
     ) -> None:
-        """Implementation of the :class:`.PipeBuilder` interface for the fixed bulk convention.
-
-        This class provides an implementation following the fixed-bulk convention. This convention
-        consists in the fact that the top-left most plaquette in the bulk always measures a known-
-        parity stabilizer (Z-basis for this class).
-
-        """
         self._generator = FixedBulkConventionGenerator(translator, compiler)
 
     def __call__(self, spec: PipeSpec) -> Block:
         if spec.pipe_kind.is_temporal:
+            return self.get_temporal_pipe_block(spec)
+        return self.get_spatial_pipe_block(spec)
             return self.get_temporal_pipe_block(spec)
         return self.get_spatial_pipe_block(spec)
 
@@ -134,8 +149,9 @@ class FixedBulkPipeBuilder(PipeBuilder):
     #    TEMPORAL PIPE    #
     #######################
 
-    def _get_temporal_pipe_block(self, spec: PipeSpec) -> Block:
-        """Returns the block to implement a temporal pipe based on the provided ``spec``.
+    def get_temporal_pipe_block(self, spec: PipeSpec) -> Block:
+        """Returns the block to implement a temporal pipe based on the
+        provided ``spec``.
 
         Args:
             spec: description of the pipe that should be implemented by this
@@ -343,6 +359,7 @@ class FixedBulkPipeBuilder(PipeBuilder):
                 )
             case _:
                 raise TQECException("Spatial pipes cannot have a direction equal to Direction3D.Z.")
+                raise TQECException("Spatial pipes cannot have a direction equal to Direction3D.Z.")
 
     def _get_spatial_regular_pipe_block(self, spec: PipeSpec) -> Block:
         assert all(not spec.is_spatial for spec in spec.cube_specs)
@@ -368,24 +385,7 @@ class FixedBulkPipeBuilder(PipeBuilder):
         ]
         return Block(layers)
 
-<<<<<<< HEAD
     def get_spatial_pipe_block(self, spec: PipeSpec) -> Block:
-=======
-    def _get_spatial_pipe_block(self, spec: PipeSpec) -> Block:
-        """Return the block to implement a spatial pipe based on the provided ``spec``.
-
-        Args:
-            spec: description of the pipe that should be implemented by this method. Should be a
-                spatial pipe.
-
-        Raises:
-            AssertionError: if ``spec`` does not represent a spatial pipe.
-
-        Returns:
-            the block to implement a spatial pipe based on the provided ``spec``.
-
-        """
->>>>>>> 21423afa (Fix D4** ruff rules (#643))
         assert spec.pipe_kind.is_spatial
         cube_specs = spec.cube_specs
         if cube_specs[0].is_spatial or cube_specs[1].is_spatial:
