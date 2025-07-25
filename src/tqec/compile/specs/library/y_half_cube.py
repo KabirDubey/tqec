@@ -151,6 +151,11 @@ def _create_y_final_layer(spec: CubeSpec):
 
     This corresponds to the final_round in Gidney's Y memory implementation.
     """
+    final_round = gen.standard_surface_code_chunk(
+        boundary_patch,
+        measure_data_basis={q: 'Z' if q.real + q.imag < distance else 'X' for q in boundary_patch.data_set},
+    )
+
     raise NotImplementedError("Y final layer creation not implemented yet")
 
 
