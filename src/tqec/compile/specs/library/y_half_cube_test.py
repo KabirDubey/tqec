@@ -1,17 +1,18 @@
 """Tests for Y Half Cube implementation."""
 
 import pytest
+
+from tqec.compile.specs.base import CubeSpec
+from tqec.compile.specs.library.y_half_cube import (
+    _parse_initialization_flag,
+    create_y_half_cube_block,
+    determine_y_half_cube_mode,
+)
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.cube import YHalfCube
 from tqec.computation.pipe import PipeKind
-from tqec.utils.position import Position3D
-from tqec.compile.specs.library.y_half_cube import (
-    determine_y_half_cube_mode,
-    _parse_initialization_flag,
-    create_y_half_cube_block,
-)
-from tqec.compile.specs.base import CubeSpec
 from tqec.utils.exceptions import TQECError
+from tqec.utils.position import Position3D
 
 
 def test_parse_initialization_flag_string():

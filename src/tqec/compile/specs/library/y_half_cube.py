@@ -4,21 +4,18 @@ This module implements Y half cube blocks using raw circuit layers,
 based on the approach from Gidney 2024.
 """
 
-import stim
-from typing import Union
+from tqec.circuit.steps._measure_y_transition_round import make_y_transition_round_nesw_xzxz_to_xzzx
+from tqec.circuit.steps._patches import make_ztop_yboundary_patch
 from tqec.compile.blocks.block import Block
-from tqec.compile.blocks.layers.atomic.raw import RawCircuitLayer
-from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
 from tqec.compile.specs.base import CubeSpec
-from tqec.circuit.schedule.circuit import ScheduledCircuit
-from tqec.computation.cube import YHalfCube
+from tqec.compile.specs.library.generators import gen
 from tqec.computation.block_graph import BlockGraph
-from tqec.utils.scale import LinearFunction, PhysicalQubitScalable2D
-from tqec.utils.position import Direction3D
+from tqec.computation.cube import YHalfCube
 from tqec.utils.exceptions import TQECError
+from tqec.utils.position import Direction3D
 
 
-def _parse_initialization_flag(flag: Union[str, bool]) -> bool:
+def _parse_initialization_flag(flag: str | bool) -> bool:
     """Parse initialization flag accepting multiple spellings.
 
     Args:
@@ -32,6 +29,7 @@ def _parse_initialization_flag(flag: Union[str, bool]) -> bool:
 
     Raises:
         ValueError: if string flag is not recognized
+
     """
     if isinstance(flag, bool):
         return flag
@@ -41,12 +39,16 @@ def _parse_initialization_flag(flag: Union[str, bool]) -> bool:
 
         # Initialization variants
         init_variants = {
-            "initialization", "initialisation", "init",
+            "initialization",
+            "initialisation",
+            "init",
         }
 
         # Measurement variants
         measure_variants = {
-            "measurement", "measure", "meas",
+            "measurement",
+            "measure",
+            "meas",
         }
 
         if flag_lower in init_variants:
@@ -54,8 +56,10 @@ def _parse_initialization_flag(flag: Union[str, bool]) -> bool:
         elif flag_lower in measure_variants:
             return False
         else:
-            raise ValueError(f"Unrecognized initialization flag: {flag}. "
-                           f"Use one of {init_variants | measure_variants}")
+            raise ValueError(
+                f"Unrecognized initialization flag: {flag}. "
+                f"Use one of {init_variants | measure_variants}"
+            )
 
     raise TypeError(f"Flag must be bool or str, got {type(flag)}")
 
@@ -73,6 +77,7 @@ def determine_y_half_cube_mode(cube, graph: BlockGraph) -> bool:
 
     Raises:
         TQECError: if cube doesn't have exactly one temporal pipe or has wrong pipe direction
+
     """
     assert isinstance(cube.kind, YHalfCube)
 
@@ -83,8 +88,10 @@ def determine_y_half_cube_mode(cube, graph: BlockGraph) -> bool:
     temporal_pipes = [pipe for pipe in connected_pipes if pipe.direction == Direction3D.Z]
 
     if len(temporal_pipes) != 1:
-        raise TQECError(f"Y Half Cube at {cube.position} must have exactly one temporal pipe, "
-                       f"found {len(temporal_pipes)} temporal pipes")
+        raise TQECError(
+            f"Y Half Cube at {cube.position} must have exactly one temporal pipe, "
+            f"found {len(temporal_pipes)} temporal pipes"
+        )
 
     pipe = temporal_pipes[0]
 
@@ -103,7 +110,7 @@ def determine_y_half_cube_mode(cube, graph: BlockGraph) -> bool:
         raise TQECError(f"Y Half Cube at {cube.position} is not connected to temporal pipe {pipe}")
 
 
-def create_y_half_cube_block(spec: CubeSpec, mode: Union[str, bool]) -> Block:
+def create_y_half_cube_block(spec: CubeSpec, mode: str | bool) -> Block:
     """Create a Y half cube block using raw circuit layers.
 
     Args:
@@ -119,6 +126,7 @@ def create_y_half_cube_block(spec: CubeSpec, mode: Union[str, bool]) -> Block:
     Raises:
         AssertionError: if spec does not represent a Y half cube
         ValueError: if mode string is not recognized
+
     """
     assert isinstance(spec.kind, YHalfCube)
     is_initialization = _parse_initialization_flag(mode)
@@ -133,15 +141,11 @@ def create_y_half_cube_block(spec: CubeSpec, mode: Union[str, bool]) -> Block:
         layers = [
             _invert_layer(y_final_layer),
             _invert_layer(y_padding_layer),
-            _invert_layer(y_switch_layer)
+            _invert_layer(y_switch_layer),
         ]
     else:
         # Measurement order: y_switch_layer, y_padding_layer, y_final_layer
-        layers = [
-            y_switch_layer,
-            y_padding_layer,
-            y_final_layer
-        ]
+        layers = [y_switch_layer, y_padding_layer, y_final_layer]
 
     return Block(layers)
 
@@ -151,12 +155,16 @@ def _create_y_final_layer(spec: CubeSpec):
 
     This corresponds to the final_round in Gidney's Y memory implementation.
     """
+    boundary_patch = make_ztop_yboundary_patch(distance=distance)
+
     final_round = gen.standard_surface_code_chunk(
         boundary_patch,
-        measure_data_basis={q: 'Z' if q.real + q.imag < distance else 'X' for q in boundary_patch.data_set},
+        measure_data_basis={
+            q: "Z" if q.real + q.imag < distance else "X" for q in boundary_patch.data_set
+        },
     )
 
-    raise NotImplementedError("Y final layer creation not implemented yet")
+    return final_round
 
 
 def _create_y_padding_layer(spec: CubeSpec):
@@ -165,7 +173,11 @@ def _create_y_padding_layer(spec: CubeSpec):
     This corresponds to the boundary_round in Gidney's Y memory implementation
     with repetitions for d/2 boundary rounds.
     """
-    raise NotImplementedError("Y padding layer creation not implemented yet")
+    boundary_patch = make_ztop_yboundary_patch(distance=distance)
+    boundary_round = gen.standard_surface_code_chunk(boundary_patch)
+
+    # TODO: repeat this
+    raise boundary_round
 
 
 def _create_y_switch_layer(spec: CubeSpec):
@@ -174,7 +186,9 @@ def _create_y_switch_layer(spec: CubeSpec):
     This corresponds to the qubit_to_boundary_round in Gidney's Y memory implementation
     for the single transition round between Y and Z bases.
     """
-    raise NotImplementedError("Y switch layer creation not implemented yet")
+    qubit_to_boundary_round = make_y_transition_round_nesw_xzxz_to_xzzx(distance=distance)  # switch
+
+    raise qubit_to_boundary_round
 
 
 def _invert_layer(layer):

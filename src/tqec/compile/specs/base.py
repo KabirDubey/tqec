@@ -64,8 +64,9 @@ class CubeSpec:
 
         # For Y half cubes, determine if it's initialization or measurement based on pipe direction
         y_half_cube_mode = None
-        if hasattr(cube.kind, '__class__') and cube.kind.__class__.__name__ == 'YHalfCube':
+        if hasattr(cube.kind, "__class__") and cube.kind.__class__.__name__ == "YHalfCube":
             from tqec.compile.specs.library.y_half_cube import determine_y_half_cube_mode
+
             try:
                 is_init = determine_y_half_cube_mode(cube, graph)
                 y_half_cube_mode = "initialization" if is_init else "measurement"
@@ -80,7 +81,12 @@ class CubeSpec:
                 y_half_cube_mode=y_half_cube_mode,
             )
         spatial_arms = SpatialArms.from_cube_in_graph(cube, graph)
-        return CubeSpec(cube.kind, spatial_arms, has_spatial_up_or_down_pipe_in_timeslice, y_half_cube_mode=y_half_cube_mode)
+        return CubeSpec(
+            cube.kind,
+            spatial_arms,
+            has_spatial_up_or_down_pipe_in_timeslice,
+            y_half_cube_mode=y_half_cube_mode,
+        )
 
     @property
     def pipe_dimensions(self) -> frozenset[Literal[Direction3D.X, Direction3D.Y]]:
