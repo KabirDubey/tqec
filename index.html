@@ -34,6 +34,7 @@
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- So that users can add custom icons -->
   <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
@@ -49,9 +50,8 @@
     <script src="_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -177,8 +177,8 @@
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="legal_notice.html">
-    Legal Notice
+  <a class="nav-link dropdown-item nav-internal" href="ethical_notice.html">
+    Ethical Notice
   </a>
 </li>
 
@@ -324,8 +324,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="legal_notice.html">
-    Legal Notice
+  <a class="nav-link nav-internal" href="ethical_notice.html">
+    Ethical Notice
   </a>
 </li>
 
@@ -416,7 +416,7 @@
 <a class="reference external" href="https://github.com/tqec/tqec/actions/workflows/gh-pages.yml"><img alt="docs" src="https://github.com/tqec/tqec/actions/workflows/gh-pages.yml/badge.svg" /></a>
 <a class="reference external" href="https://github.com/tqec/tqec/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/tqec/tqec.svg" /></a>
 <a class="reference external" href="https://www.star-history.com/#tqec/tqec&amp;amp;Date"><img alt="Star History Chart" src="https://img.shields.io/badge/%F0%9F%93%88-Star%20History-blue?style=flat-square" /></a>
-<a class="reference external" href="https://tqec.github.io/tqec/legal_notice.html"><img alt="Legal Notice" src="https://img.shields.io/badge/docs-legal%20notice-blue" /></a>
+<a class="reference external" href="https://tqec.github.io/tqec/ethical_notice.html"><img alt="Ethical Notice" src="https://img.shields.io/badge/docs-ethical%20notice-blue" /></a>
 <a class="reference external" href="https://github.com/tqec/tqec/blob/main/LICENSE"><img alt="Licensed under the Apache 2.0 open-source license" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=opensourceinitiative" /></a></p>
 <p>TQEC (Topological Quantum Error Correction) is a design automation software for representing,
 constructing and compiling large-scale fault-tolerant quantum computations based on surface code and lattice surgery.</p>
@@ -437,8 +437,13 @@ These blocks can then be combined to construct large-scale logical computations,
 <p>Documentation is available at <a class="reference external" href="https://tqec.github.io/tqec/index.html">https://tqec.github.io/tqec/index.html</a></p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<p>Currently, you need to install <code class="docutils literal notranslate"><span class="pre">tqec</span></code> from source:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/tqec/tqec.git
+<p>Currently, you need to install <code class="docutils literal notranslate"><span class="pre">tqec</span></code> from source with <code class="docutils literal notranslate"><span class="pre">pip</span></code> or <a class="reference external" href="https://docs.astral.sh/uv/"><code class="docutils literal notranslate"><span class="pre">uv</span></code></a>:</p>
+<p><strong>With pip:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/tqec/tqec.git
+</pre></div>
+</div>
+<p><strong>With uv:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/tqec/tqec.git
 </pre></div>
 </div>
 <p>For a more detailed installation guide and common troubleshooting tips, see the <a class="reference external" href="https://tqec.github.io/tqec/user_guide/installation.html">installation page</a> in the documentation.</p>
@@ -454,7 +459,7 @@ Refer to <a class="reference external" href="https://tqec.github.io/tqec/user_gu
 <span class="c1"># 0. Path to the logical_cnot.dae file</span>
 <span class="n">cnot_dae_filepath</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;assets&quot;</span> <span class="o">/</span> <span class="s2">&quot;logical_cnot.dae&quot;</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">cnot_dae_filepath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The file &#39;</span><span class="si">{</span><span class="n">cnot_dae_filepath</span><span class="si">}</span><span class="s2">&#39; does not exists.&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The file &#39;</span><span class="si">{</span><span class="n">cnot_dae_filepath</span><span class="si">}</span><span class="s2">&#39; does not exist.&quot;</span><span class="p">)</span>
 
 <span class="c1"># 1. Construct the logical computation</span>
 <span class="n">block_graph</span> <span class="o">=</span> <span class="n">BlockGraph</span><span class="o">.</span><span class="n">from_dae_file</span><span class="p">(</span><span class="n">cnot_dae_filepath</span><span class="p">)</span>
@@ -488,17 +493,17 @@ Refer to <a class="reference external" href="https://tqec.github.io/tqec/user_gu
 <li><p>Overview of state of the art 2D QEC: <a class="reference external" href="https://docs.google.com/presentation/d/1xYBfkVMpA1YEVhpgTZpKvY8zeOO1VyHmRWvx_kDJEU8/edit?usp=sharing">Slides</a>/<a class="reference external" href="https://www.youtube.com/watch?v=aUtH7wdwBAM&amp;amp;t=2s">Video</a></p></li>
 <li><p>Community questions and answers: <a class="reference external" href="https://docs.google.com/document/d/1VRBPU5eMGVEcxzgHccd98Ooa7geHGRWJoN_fdB1VClM/edit?usp=sharing">Docs</a></p></li>
 <li><p>Introduction to surface code quantum computation: <a class="reference external" href="https://docs.google.com/presentation/d/1GxGD9kzDYJA6X47BXGII2qjDVVoub5BsSVrGHRZINO4/edit?usp=sharing">Slides</a></p></li>
-<li><p>Programming a quantum computer using SketchUp: <a class="reference external" href="https://docs.google.com/presentation/d/1MjFuODipnmF-jDstEnQrqbsOtbSKZyPsuTOMo8wpSJc/edit#slide=id.p">Slides</a>/<a class="reference external" href="https://drive.google.com/file/d/1o1LMiidtYDcVoEFZXsJPb7XdTkZ83VFX/view?usp=drive_link">Video</a></p></li>
+<li><p>Programming a quantum computer using SketchUp: <a class="reference external" href="https://docs.google.com/presentation/d/1MjFuODipnmF-jDstEnQrqbsOtbSKZyPsuTOMo8wpSJc/edit?usp=sharing">Slides</a>/<a class="reference external" href="https://drive.google.com/file/d/1o1LMiidtYDcVoEFZXsJPb7XdTkZ83VFX/view?usp=drive_link">Video</a></p></li>
 </ul>
-<p>All the resources and group meeting recordings are available at <a class="reference external" href="https://docs.google.com/spreadsheets/d/11DSA2wzKLOrfTGNHunFvzsMYeO7jZ8Ny8kpzoC_wKQg/edit?resourcekey=0-PdGFkp5s-4XWihMSxk0UIg&amp;amp;gid=0#gid=0">this link</a>.</p>
+<p>All the resources and group meeting recordings are available at <a class="reference external" href="https://docs.google.com/spreadsheets/d/11DSA2wzKLOrfTGNHunFvzsMYeO7jZ8Ny8kpzoC_wKQg/edit?usp=sharing&amp;amp;resourcekey=0-PdGFkp5s-4XWihMSxk0UIg">this link</a>.</p>
 <p>Please join the <a class="reference external" href="https://groups.google.com/g/tqec-design-automation">Google group</a> to receive more updates and information!</p>
 <hr class="docutils" />
 <blockquote>
-<div><p class="rubric" id="legal-notice"><strong>Legal Notice</strong></p>
+<div><p class="rubric" id="ethical-notice"><strong>Ethical notice</strong></p>
 <p>This library is intended for <strong>academic, educational, and civilian research only</strong>, in the field of <strong>fault-tolerant quantum computing</strong>, particularly in <strong>surface code compilation</strong> and <strong>topological error correction</strong>.</p>
 <p>It is made freely and publicly available without access restrictions, in the interest of advancing <strong>open scientific and academic collaboration</strong>.</p>
-<p><strong>Use in military, surveillance, or dual-use applications is strictly prohibited.</strong></p>
-<p>Please, review the full <a class="reference external" href="https://github.com/tqec/tqec/blob/main/LEGAL_NOTICE.md"><code class="docutils literal notranslate"><span class="pre">LEGAL_NOTICE.md</span></code></a> for important terms regarding <strong>export control</strong>, <strong>ethical use</strong>, and <strong>contributor responsibilities</strong>.</p>
+<p>The maintainers request that users and contributors <strong>refrain from engaging in, supporting, or facilitating military, surveillance, or dual-use applications</strong>.</p>
+<p>Please, review the full <a class="reference external" href="https://github.com/tqec/tqec/blob/main/ETHICAL_NOTICE.md"><code class="docutils literal notranslate"><span class="pre">ETHICAL_NOTICE.md</span></code></a> for important terms regarding <strong>export control</strong>, <strong>ethical use</strong>, and <strong>contributor responsibilities</strong>.</p>
 </div></blockquote>
 </section>
 </section>
@@ -585,7 +590,7 @@ Refer to <a class="reference external" href="https://tqec.github.io/tqec/user_gu
 
   <p class="copyright">
     
-      © Copyright 2024 - 2025, TQEC Community.
+      © Copyright 2024 - 2026, TQEC Community.
       <br/>
     
   </p>
@@ -594,7 +599,7 @@ Refer to <a class="reference external" href="https://tqec.github.io/tqec/user_gu
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
     <br/>
   </p>
 </div>
