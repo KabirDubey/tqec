@@ -29,8 +29,7 @@ Install ``pandoc`` (required system dependency)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``pandoc`` is a required system dependency for ``nbsphinx`` to convert notebooks.
-Local environment installation (pip/uv) only installs a pandoc wrapper — the system
-binary must be installed separately. See `this note <https://stackoverflow.com/a/71585691>`_
+Local environment installation (pip/uv) only installs a pandoc wrapper. See `this note <https://stackoverflow.com/a/71585691>`_
 for more info.
 
 .. tab-set::
