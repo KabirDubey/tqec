@@ -31,6 +31,17 @@ of ``tqec`` through ``pip`` or ``uv``.
 
         .. code-block:: bash
 
+            # Install pandoc if not already present
+            if ! command -v pandoc &> /dev/null; then
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    brew install pandoc
+                elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+                    sudo apt-get install -y pandoc
+                elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
+                    choco install pandoc -y
+                fi
+            fi
+
             # Clone the repository to have local files to work on
             git clone https://github.com/tqec/tqec.git
 
@@ -62,6 +73,17 @@ of ``tqec`` through ``pip`` or ``uv``.
 
         .. code-block:: bash
 
+            # Install pandoc if not already present
+            if ! command -v pandoc &> /dev/null; then
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    brew install pandoc
+                elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+                    sudo apt-get install -y pandoc
+                elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
+                    choco install pandoc -y
+                fi
+            fi
+
             # Clone the repository to have local files to work on
             git clone https://github.com/tqec/tqec.git
             # Go in the tqec directory
@@ -83,9 +105,8 @@ of ``tqec`` through ``pip`` or ``uv``.
             changes on the code base.
 
 
-.. warning::
-    You might have to install ``pandoc`` separately as the instructions above only install a ``pandoc`` wrapper.
-    See https://stackoverflow.com/a/71585691 for more info.
+.. note::
+    ``pandoc`` is a required system dependency for ``nbsphinx`` to convert notebooks. Local installation only installs a pandoc wrapper. See https://stackoverflow.com/a/71585691 for more info.
 
 If you encounter any issue during the installation, please refer to :ref:`installation` for more information.
 
