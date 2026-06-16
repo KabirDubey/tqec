@@ -27,8 +27,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -37,10 +37,10 @@
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=0790524f97105ba85085"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=0790524f97105ba85085" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
 
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
@@ -479,44 +479,9 @@ of <code class="docutils literal notranslate"><span class="pre">tqec</span></cod
 <p>Creating an environment before running <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> is optional but recommended to avoid everything installing globally.
 Click <a class="reference external" href="https://docs.python.org/3/library/venv.html">here</a> for a common approach.</p>
 </div>
-<section id="install-pandoc-required-system-dependency">
-<h3>Install <code class="docutils literal notranslate"><span class="pre">pandoc</span></code> (required system dependency)<a class="headerlink" href="#install-pandoc-required-system-dependency" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">pandoc</span></code> is a required system dependency for <code class="docutils literal notranslate"><span class="pre">nbsphinx</span></code> to convert notebooks.
-Local environment installation (pip/uv) only installs a pandoc wrapper. See <a class="reference external" href="https://stackoverflow.com/a/71585691">this note</a>
-for more info.</p>
 <div class="sd-tab-set docutils">
 <input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
 <label class="sd-tab-label" for="sd-tab-item-0">
-macOS</label><div class="sd-tab-content docutils">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>install<span class="w"> </span>pandoc
-</pre></div>
-</div>
-</div>
-<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-1">
-Linux</label><div class="sd-tab-content docutils">
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>pandoc
-</pre></div>
-</div>
-</div>
-<input id="sd-tab-item-2" name="sd-tab-set-0" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-2">
-Windows (PowerShell)</label><div class="sd-tab-content docutils">
-<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="c"># Using winget (built into Windows 10/11)</span>
-<span class="n">winget</span> <span class="n">install</span> <span class="p">-</span><span class="n">-id</span> <span class="n">JohnMacFarlane</span><span class="p">.</span><span class="n">Pandoc</span>
-
-<span class="c"># Or using Chocolatey</span>
-<span class="n">choco</span> <span class="n">install</span> <span class="n">pandoc</span> <span class="n">-y</span>
-</pre></div>
-</div>
-</div>
-</div>
-</section>
-<section id="install-tqec">
-<h3>Install <code class="docutils literal notranslate"><span class="pre">tqec</span></code><a class="headerlink" href="#install-tqec" title="Link to this heading">#</a></h3>
-<div class="sd-tab-set docutils">
-<input checked="checked" id="sd-tab-item-3" name="sd-tab-set-1" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-3">
 pip</label><div class="sd-tab-content docutils">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the repository to have local files to work on</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tqec/tqec.git
@@ -547,8 +512,8 @@ changes on the code base. The <code class="docutils literal notranslate"><span c
 that the code in the <code class="docutils literal notranslate"><span class="pre">tqec</span></code> folder will be the code used when importing <code class="docutils literal notranslate"><span class="pre">tqec</span></code>.</p>
 </div>
 </div>
-<input id="sd-tab-item-4" name="sd-tab-set-1" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-4">
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" for="sd-tab-item-1">
 uv</label><div class="sd-tab-content docutils">
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the repository to have local files to work on</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tqec/tqec.git
@@ -573,9 +538,13 @@ changes on the code base.</p>
 </div>
 </div>
 </div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>You might have to install <code class="docutils literal notranslate"><span class="pre">pandoc</span></code> separately as the instructions above only install a <code class="docutils literal notranslate"><span class="pre">pandoc</span></code> wrapper.
+See <a class="reference external" href="https://stackoverflow.com/a/71585691">https://stackoverflow.com/a/71585691</a> for more info.</p>
+</div>
 <p>If you encounter any issue during the installation, please refer to <a class="reference internal" href="user_guide/installation.html#installation"><span class="std std-ref">How to install tqec</span></a> for more information.</p>
 <p>You can now start contributing, following the rules explained in the next sections.</p>
-</section>
 </section>
 <section id="id1">
 <h2>How to contribute<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
@@ -705,11 +674,7 @@ else to do it, you should send a clear comment asking for it.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-overview">Architecture Overview</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-procedure-for-developers">Installation procedure (for developers)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-pandoc-required-system-dependency">Install <code class="docutils literal notranslate"><span class="pre">pandoc</span></code> (required system dependency)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-tqec">Install <code class="docutils literal notranslate"><span class="pre">tqec</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-procedure-for-developers">Installation procedure (for developers)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">How to contribute</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#look-at-issues">1. Look at issues</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#comment-on-one-or-more-issues">2. Comment on one or more issues</a></li>
@@ -743,8 +708,8 @@ else to do it, you should send a clear comment asking for it.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=0790524f97105ba85085"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -778,7 +743,7 @@ else to do it, you should send a clear comment asking for it.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.18.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
 </p></div>
       
     </div>

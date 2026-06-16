@@ -25,40 +25,6 @@ of ``tqec`` through ``pip`` or ``uv``.
     Creating an environment before running ``pip install`` is optional but recommended to avoid everything installing globally.
     Click `here <https://docs.python.org/3/library/venv.html>`_ for a common approach.
 
-Install ``pandoc`` (required system dependency)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``pandoc`` is a required system dependency for ``nbsphinx`` to convert notebooks.
-Local environment installation (pip/uv) only installs a pandoc wrapper. See `this note <https://stackoverflow.com/a/71585691>`_
-for more info.
-
-.. tab-set::
-
-    .. tab-item:: macOS
-
-        .. code-block:: bash
-
-            brew install pandoc
-
-    .. tab-item:: Linux
-
-        .. code-block:: bash
-
-            sudo apt-get install -y pandoc
-
-    .. tab-item:: Windows (PowerShell)
-
-        .. code-block:: powershell
-
-            # Using winget (built into Windows 10/11)
-            winget install --id JohnMacFarlane.Pandoc
-
-            # Or using Chocolatey
-            choco install pandoc -y
-
-Install ``tqec``
-~~~~~~~~~~~~~~~~
-
 .. tab-set::
 
     .. tab-item:: pip
@@ -116,6 +82,10 @@ Install ``tqec``
             will not be reflected automatically on the copied files, which will limit your ability to test new
             changes on the code base.
 
+
+.. warning::
+    You might have to install ``pandoc`` separately as the instructions above only install a ``pandoc`` wrapper.
+    See https://stackoverflow.com/a/71585691 for more info.
 
 If you encounter any issue during the installation, please refer to :ref:`installation` for more information.
 
