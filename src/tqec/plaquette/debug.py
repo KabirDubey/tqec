@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from tqec.circuit.qubit import GridQubit
 from tqec.plaquette.enums import PlaquetteOrientation
 from tqec.plaquette.rpng.rpng import RPNG, RPNGDescription
 from tqec.utils.enums import PauliBasis
-from tqec.visualisation.computation.plaquette.base import (
-    EmptySVGPlaquetteDrawer,
-    SVGPlaquetteDrawer,
-)
-from tqec.visualisation.computation.plaquette.rpng import RPNGPlaquetteDrawer
+
+if TYPE_CHECKING:
+    from tqec.visualisation.computation.plaquette.base import SVGPlaquetteDrawer
 
 
 @dataclass
@@ -129,6 +127,15 @@ class PlaquetteDebugInformation:
 
     def get_svg_drawer(self) -> SVGPlaquetteDrawer:  # pragma: no cover
         """Get a drawer to draw the plaquette associated to ``self``."""
+        # Warning explicitly disabled because this intended and the only way to
+        # avoid the costly svg import.
+        from tqec.visualisation.computation.plaquette.base import (  # noqa: PLC0415
+            EmptySVGPlaquetteDrawer,
+        )
+        from tqec.visualisation.computation.plaquette.rpng import (  # noqa: PLC0415
+            RPNGPlaquetteDrawer,
+        )
+
         if self.drawer is not None:
             return self.drawer
         if self.rpng is not None:

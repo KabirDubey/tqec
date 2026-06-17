@@ -27,7 +27,6 @@ from tqec.post_processing.shift import shift_to_only_positive
 from tqec.utils.exceptions import TQECError, TQECWarning
 from tqec.utils.paths import DEFAULT_DETECTOR_DATABASE_PATH
 from tqec.utils.position import BlockPosition3D
-from tqec.visualisation.computation.tree import LayerVisualiser
 
 
 class QubitLister(NodeWalker):
@@ -102,8 +101,10 @@ class LayerTree:
             "annotations": {k: annotation.to_dict() for k, annotation in self._annotations.items()},
         }
 
-    def _annotate_circuits(self, k: int) -> None:
-        self._root.walk(AnnotateCircuitOnLayerNode(k))
+    def _annotate_circuits(self, k: int, reschedule_measurements: bool = True) -> None:
+        self._root.walk(
+            AnnotateCircuitOnLayerNode(k, reschedule_measurements=reschedule_measurements)
+        )
 
     def _annotate_qubit_map(self, k: int) -> None:
         self._get_annotation(k).qubit_map = self._get_global_qubit_map(k)
@@ -238,13 +239,14 @@ class LayerTree:
         only_use_database: bool = False,
         lookback: int = 2,
         parallel_process_count: int = 1,
+        reschedule_measurements: bool = True,
     ) -> None:
         """Annotate the tree with circuits, qubit maps, detectors and observables."""
         # If already annotated, no need to re-annotate.
         if k in self._annotations:
             return  # pragma: no cover
         # Else, perform all the needed computations.
-        self._annotate_circuits(k)
+        self._annotate_circuits(k, reschedule_measurements=reschedule_measurements)
         self._annotate_qubit_map(k)
         # This method will also update the detector_database and save it to disk at database_path.
         self._annotate_detectors(
@@ -268,6 +270,7 @@ class LayerTree:
         do_not_use_database: bool = False,
         only_use_database: bool = False,
         lookback: int = 2,
+        reschedule_measurements: bool = True,
     ) -> stim.Circuit:
         """Generate the quantum circuit representing ``self``.
 
@@ -299,6 +302,10 @@ class LayerTree:
                 registered in the database is encountered.
             lookback: number of QEC rounds to consider to try to find detectors.
                 Including more rounds increases computation time.
+            reschedule_measurements: whether to reschedule measurements in a ``LayoutLayer``
+                to be in the same moment. Since each plaquette may have its own measurement
+                schedule, setting this may be necessary for hardware that requires
+                measurements to be synchronous.
 
         Returns:
             a ``stim.Circuit`` instance implementing the computation described
@@ -361,6 +368,7 @@ class LayerTree:
             only_use_database=only_use_database,
             lookback=lookback,
             parallel_process_count=parallel_process_count,
+            reschedule_measurements=reschedule_measurements,
         )
         annotations = self._get_annotation(k)
         qubit_map = annotations.qubit_map
@@ -478,6 +486,10 @@ class LayerTree:
             a list of SVG strings representing the layers of the tree.
 
         """
+        # Warning explicitly disabled because this intended and the only way to
+        # avoid the costly svg import.
+        from tqec.visualisation.computation.tree import LayerVisualiser  # noqa: PLC0415
+
         if show_observable is not None and show_observable >= len(self._abstract_observables):
             raise TQECError(
                 f"{show_observable:=} is out of range for the number of "

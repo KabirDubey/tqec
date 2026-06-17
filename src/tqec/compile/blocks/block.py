@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Final, Protocol, cast
 
 import gen
@@ -132,7 +133,7 @@ class LayeredBlock(SequencedLayers, Block):
             )
         return layer
 
-    @property
+    @cached_property
     def dimensions(self) -> tuple[LinearFunction, LinearFunction, LinearFunction]:
         """Return the dimensions of ``self``.
 
