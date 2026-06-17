@@ -53,7 +53,7 @@ def test_move_rotation_filled(in_obs_basis: PauliBasis) -> None:
 def test_s_gate_teleportation_correlation_surface(
     in_obs_basis: PauliBasis, num_surfaces: int, external_stabilizers: set[str]
 ) -> None:
-    io_ports = [0, 2]
+    io_ports = list(s_gate_teleportation().ports.values())
 
     g = s_gate_teleportation(in_obs_basis)
     correlation_surfaces = g.find_correlation_surfaces()

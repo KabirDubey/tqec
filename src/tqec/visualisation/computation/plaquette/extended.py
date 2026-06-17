@@ -6,7 +6,7 @@ from typing import cast
 import svg
 from typing_extensions import override
 
-from tqec.plaquette.rpng import PauliBasis
+from tqec.utils.enums import PauliBasis
 from tqec.utils.enums import Basis
 from tqec.visualisation.computation.plaquette.base import (
     PlaquetteCorner,
