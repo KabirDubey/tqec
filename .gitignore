@@ -200,3 +200,8 @@ benchmarks/data/
 
 # debug
 debug
+
+# local review artifacts (kept locally for context, not tracked)
+local_documentation/
+reviewUtils/
+mergeLogs/
