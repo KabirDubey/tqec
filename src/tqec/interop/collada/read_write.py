@@ -97,13 +97,14 @@ def read_block_graph_from_dae_file(
 
             # Rotations step 1. Skip if node's matrix not rotated
             # - If node's matrix YES rotated: check closer & make necessary adjustments
-            if not np.allclose(transformation.rotation, np.eye(3), atol=1e-9):
-                translation, kind = rotate_on_import(
-                    transformation.rotation,
-                    transformation.translation,
-                    transformation.scale,
-                    kind,
-                )
+            if not np.allclose(transformation.rotation, np.eye(3), atol=1e-6):
+                if not isinstance(kind, YHalfCube):
+                    translation, kind = rotate_on_import(
+                        transformation.rotation,
+                        transformation.translation,
+                        transformation.scale,
+                        kind,
+                    )
 
             # Rotations step 2. Skip if hadamard points in positive direction
             if isinstance(kind, PipeKind):
