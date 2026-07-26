@@ -13,7 +13,6 @@ from tqec.compile.blocks.layers.composed.sequenced import SequencedLayers
 from tqec.compile.specs.base import CubeBuilder, CubeSpec, PipeBuilder, PipeSpec
 from tqec.compile.specs.enums import SpatialArms
 from tqec.compile.specs.library.generators.fixed_boundary import FixedBoundaryConventionGenerator
-from tqec.compile.specs.library.generators.y_basis import get_y_half_cube_block
 from tqec.computation.cube import Port, YHalfCube, ZXCube
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
@@ -170,9 +169,13 @@ class FixedBoundaryCubeBuilder(CubeBuilder):
         if isinstance(kind, Port):
             raise TQECError("Cannot build a block for a Port.")
         elif isinstance(kind, YHalfCube):
-            y_spec = spec.y_half_cube_spec
-            assert y_spec is not None
-            return get_y_half_cube_block(y_spec, "fixed_boundary")
+            raise NotImplementedError(
+                "The Y half cube is not yet implemented for the fixed_boundary "
+                "convention. Its circuit generation is lossy in this convention "
+                "(native distance below the code distance), so it is intentionally "
+                "unsupported pending a circuit-generation fix. Use the fixed_bulk "
+                "convention for Y-basis initialization/measurement."
+            )
         template, pgen = self._get_template_and_plaquettes_generator(spec)
         return _get_block(
             z_basis=kind.z,
