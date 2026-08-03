@@ -18,7 +18,7 @@ from tqec.compile.specs.enums import SpatialArms
 from tqec.compile.specs.library.generators.fixed_bulk import (
     FixedBulkConventionGenerator,
 )
-from tqec.compile.specs.library.generators.y_basis import get_y_half_cube_block
+from tqec.compile.specs.library.generators.y_basis_fixed_bulk import get_y_half_cube_block
 from tqec.computation.cube import Port, YHalfCube, ZXCube
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
@@ -88,7 +88,7 @@ class FixedBulkCubeBuilder(CubeBuilder):
         elif isinstance(kind, YHalfCube):
             y_spec = spec.y_half_cube_spec
             assert y_spec is not None
-            return get_y_half_cube_block(y_spec, "fixed_bulk")
+            return get_y_half_cube_block(y_spec)
         # else
         template, (init, repeat, measure) = self._get_template_and_plaquettes(spec)
         layers: list[BaseLayer | BaseComposedLayer] = [

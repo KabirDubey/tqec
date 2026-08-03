@@ -36,6 +36,8 @@ from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
 from tqec.compile.specs.base import YHalfCubeSpec
 from tqec.plaquette.plaquette import Plaquette, Plaquettes
 from tqec.plaquette.qubit import SquarePlaquetteQubits
+from tqec.plaquette.rpng.rpng import RPNGDescription
+from tqec.plaquette.rpng.translators.default import DefaultRPNGTranslator
 from tqec.templates.base import BorderIndices, RectangularTemplate
 from tqec.templates.enums import TemplateBorder
 from tqec.utils.enums import Basis as TQECBasis
@@ -44,7 +46,9 @@ from tqec.utils.frozendefaultdict import FrozenDefaultDict
 from tqec.utils.scale import LinearFunction, PlaquetteScalable2D
 
 Basis = Literal["X", "Z"]
-RoundKind = Literal["switch", "pad", "final"]
+# "hold" is an ordinary memory round on the full qubit patch, placed at the connected temporal
+# border so the temporal pipe consumes it (leaving the SWITCH transition round in the interior).
+RoundKind = Literal["switch", "pad", "final", "hold"]
 
 # Interaction directions (matching the plaquette orderings used across TQEC).
 DIRS: list[complex] = [(0.5 + 0.5j) * 1j**d for d in range(4)]
@@ -377,6 +381,8 @@ def _canonical_key(ops_by_ts: dict[int, list[tuple[str, tuple[int, ...]]]]):
 def _round_moment_list(distance: int, top: Basis, kind: RoundKind, reverse: bool) -> Round:
     if kind == "switch":
         rnd = _transition_round(distance, top)
+    elif kind == "hold":
+        rnd = _standard_round(_qubit_patch(distance, top))
     else:
         patch = _degenerate_patch(distance, top)
         mdb = _final_measure_data_basis(patch.data_set, top) if kind == "final" else None
@@ -454,9 +460,13 @@ class _YRoundTemplate(RectangularTemplate):
         )
 
 
+# The canonical "no plaquette" filling empty template cells (index 0), matching the RPNG path.
+_EMPTY_PLAQUETTE = DefaultRPNGTranslator().translate(RPNGDescription.empty())
+
+
 def _y_round_plaquettes(top: Basis, kind: RoundKind, reverse: bool) -> Plaquettes:
     _, plaq_of = _role_map(top, kind, reverse)
-    return Plaquettes(FrozenDefaultDict(dict(plaq_of), default_value=None))
+    return Plaquettes(FrozenDefaultDict(dict(plaq_of), default_value=_EMPTY_PLAQUETTE))
 
 
 # --------------------------------------------------------------------------------------------
@@ -479,13 +489,19 @@ def get_y_half_cube_block(y_spec: YHalfCubeSpec) -> LayeredBlock:
     # padding_rounds = distance // 2 = k
     padding = LinearFunction(1, 0)
     if y_spec.initialization:
+        # Prepared state read out (open Z-), then reverse padding/transition, then a memory HOLD
+        # at the connected Z+ border (consumed by the temporal pipe to the neighbour above).
         layers: list[BaseLayer | BaseComposedLayer] = [
             _round_layer(top, "final", True),
             RepeatedLayer(_round_layer(top, "pad", True), repetitions=padding),
             _round_layer(top, "switch", True),
+            _round_layer(top, "hold", True),
         ]
     else:
+        # A memory HOLD at the connected Z- border (consumed by the temporal pipe to the neighbour
+        # below), then the transition, padding, and data readout (open Z+).
         layers = [
+            _round_layer(top, "hold", False),
             _round_layer(top, "switch", False),
             RepeatedLayer(_round_layer(top, "pad", False), repetitions=padding),
             _round_layer(top, "final", False),
