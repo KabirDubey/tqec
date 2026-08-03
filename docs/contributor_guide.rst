@@ -84,8 +84,8 @@ of ``tqec`` through ``pip`` or ``uv``.
 
 
 .. warning::
-    You might have to install ``pandoc`` separately as the instructions above only install a ``pandoc`` wrapper.
-    See https://stackoverflow.com/a/71585691 for more info.
+    You might have to install ``pandoc`` separately as the instructions above only install a ``pandoc`` wrapper, not
+    the executable. See https://pandoc.org/installing.html for instructions.
 
 If you encounter any issue during the installation, please refer to :ref:`installation` for more information.
 
@@ -179,7 +179,8 @@ by other people, you can
 on the ``main`` branch of the tqec repository. In the PR message, try to
 provide as much information as possible to help other people understanding your code.
 
-Once your code has been reviewed and accepted by at least one of the developers, you
-will be able to merge it to the ``main`` branch.
-You (the PR owner) are responsible to click on the "Merge" button. If you prefer someone
-else to do it, you should send a clear comment asking for it.
+Once your code has been reviewed and accepted by at least one of the developers, the PR can be merged to the ``main`` branch.
+
+**For contributors with write access:** you can merge the PR yourself by clicking the "Merge" button.
+
+**For external contributors (no write access):** please add a comment on the PR indicating it is ready to merge (e.g., "Ready to merge" or "@maintainers ready to merge"), and a maintainer will merge it for you.
