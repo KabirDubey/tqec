@@ -100,3 +100,67 @@ def _annotate_observable_at_node(
             obs_qubits, measurement_record, observable_index
         )
         node.get_annotations(k).observables.append(obs_annotation)
+
+
+def y_switch_top_basis(leaf: LayerNode) -> str | None:
+    """Return the Y half-cube top boundary basis if ``leaf`` is a transition (SWITCH) round.
+
+    The fixed-bulk Y logical (midline) is measured during the transition round, so this identifies
+    the interior layer at which it should be annotated. Returns ``None`` for any other layer.
+    """
+    # Lazy import: keep the generic annotator free of a convention-specific dependency.
+    from tqec.compile.specs.library.generators.y_basis_fixed_bulk import (  # noqa: PLC0415
+        _YRoundTemplate,
+    )
+
+    layer = leaf._layer
+    if not isinstance(layer, LayoutLayer):
+        return None
+    for plaquette_layer in layer.layers.values():
+        template = getattr(plaquette_layer, "template", None)
+        if isinstance(template, _YRoundTemplate) and template.kind == "switch":
+            return template.top
+    return None
+
+
+def _annotate_y_observable_at_node(
+    node: LayerNode,
+    obs_slice: AbstractObservable,
+    k: int,
+    observable_index: int,
+    observable_builder: ObservableBuilder,
+    y_top: str,
+    component: ObservableComponent | None = None,
+) -> None:
+    """Annotate the fixed-bulk Y-basis logical (midline) at the transition (SWITCH) round node.
+
+    The Y logical is the product of the single-corner ``MY`` and the two orthogonal midline
+    stabiliser measurements, all measured during the transition round -- an interior layer of the
+    Y half-cube block, not covered by the top/bottom face annotations.
+    """
+    # Lazy import: keep the generic annotator free of a convention-specific dependency.
+    from tqec.compile.specs.library.generators.y_basis_fixed_bulk import (  # noqa: PLC0415
+        y_corner_local_coord,
+        y_observable_local_coords,
+    )
+
+    circuit = node.get_annotations(k).circuit
+    assert circuit is not None
+    records = MeasurementRecordsMap.from_scheduled_circuit(circuit)
+    assert isinstance(node._layer, LayoutLayer)
+    layout_template, _ = node._layer.to_template_and_plaquettes()
+    local_coords = y_observable_local_coords(2 * k + 1, y_top)
+    corner_local = [y_corner_local_coord(2 * k + 1, y_top)]
+    for cube in obs_slice.y_half_cubes:
+        # The Y logical is read out only by the measurement half cube, whose single-corner ``MY``
+        # is measured; the initialization half cube prepares the state (its corner is reset).
+        corner = observable_builder.transform_coords_into_grid(
+            k, layout_template, corner_local, cube.position
+        )
+        if not any(c in records for c in corner):
+            continue
+        qubits = observable_builder.transform_coords_into_grid(
+            k, layout_template, local_coords, cube.position
+        )
+        obs_annotation = get_observable_with_measurement_records(qubits, records, observable_index)
+        node.get_annotations(k).observables.append(obs_annotation)

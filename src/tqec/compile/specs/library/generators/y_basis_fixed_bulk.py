@@ -446,6 +446,16 @@ class _YRoundTemplate(RectangularTemplate):
         return ret
 
     @property
+    def kind(self) -> RoundKind:
+        """The Y round this template lays out (``switch`` carries the logical observable)."""
+        return self._kind
+
+    @property
+    def top(self) -> Basis:
+        """The top boundary basis of the Y half cube this round belongs to."""
+        return self._top
+
+    @property
     def scalable_shape(self) -> PlaquetteScalable2D:
         return PlaquetteScalable2D(LinearFunction(2, 2), LinearFunction(2, 2))
 
@@ -507,3 +517,56 @@ def get_y_half_cube_block(y_spec: YHalfCubeSpec) -> LayeredBlock:
             _round_layer(top, "final", False),
         ]
     return LayeredBlock(layers)
+
+
+# --------------------------------------------------------------------------------------------
+# Logical observable (Y midline)
+# --------------------------------------------------------------------------------------------
+def _y_observable_measure_qubits(distance: int, top: Basis) -> set[complex]:
+    """Patch-coordinate measure qubits whose SWITCH-round measurements form the Y logical.
+
+    Ported from the gen observable flow (y_basis.py): the single-corner ``MY`` plus the
+    upper-right and lower-left quadrant stabiliser measurements that compose the two orthogonal
+    midline operators crossing at the centre.
+    """
+    start = _qubit_patch(distance, top)
+    end = _degenerate_patch(distance, top)
+    used = start.used_set | end.used_set
+
+    def _m_basis(m: complex) -> Basis | None:
+        if m.real % 1 == 0:
+            return None
+        return _checkerboard_basis(m, "Z")
+
+    xs = {q for q in used if _m_basis(q) == "X"}
+    zs = {q for q in used if _m_basis(q) == "Z"}
+    top_row = {q for q in used if q.imag == -0.5}
+    left_col = {q for q in used if q.real == -0.5}
+    half_d = distance // 2
+    mset_ur = xs if top == "Z" else zs
+    mset_dl = xs if top == "X" else zs
+    my_target = complex(0, distance - 1) if top == "X" else complex(distance - 1, 0)
+    qubits = {my_target}
+    qubits |= {q for q in (mset_ur | top_row) if q.real > half_d and q.imag < half_d}
+    qubits |= {q for q in (mset_dl | left_col) if q.real < half_d and q.imag > half_d}
+    return qubits
+
+
+def y_observable_local_coords(distance: int, top: Basis) -> list[tuple[float, float]]:
+    """Observable-builder local coordinates of the Y-logical measurements in the transition round.
+
+    The observable-builder local convention places the top-left corner at ``(0,0)`` with data
+    qubits at integer and measure qubits at half-integer coordinates, which is the patch
+    coordinate system shifted by ``(1, 1)``.
+    """
+    return [(q.real + 1.0, q.imag + 1.0) for q in _y_observable_measure_qubits(distance, top)]
+
+
+def y_corner_local_coord(distance: int, top: Basis) -> tuple[float, float]:
+    """Observable-builder local coordinate of the single-corner ``MY`` data qubit.
+
+    Measured only by the measurement half cube (the initialization half cube resets it), so it
+    distinguishes the readout end of a Y memory.
+    """
+    my_target = complex(0, distance - 1) if top == "X" else complex(distance - 1, 0)
+    return (my_target.real + 1.0, my_target.imag + 1.0)
