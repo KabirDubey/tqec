@@ -88,7 +88,10 @@ class FixedBulkCubeBuilder(CubeBuilder):
         elif isinstance(kind, YHalfCube):
             y_spec = spec.y_half_cube_spec
             assert y_spec is not None
-            return get_y_half_cube_block(y_spec)
+            # Drive the Y half cube's PAD repetitions with the shared block temporal height so its
+            # temporal footprint matches ordinary cubes it may be merged with in parallel (e.g. the
+            # S-gate gadgets). ``get_y_half_cube_block`` otherwise defaults PAD to d/2.
+            return get_y_half_cube_block(y_spec, pad_repetitions=block_temporal_height)
         # else
         template, (init, repeat, measure) = self._get_template_and_plaquettes(spec)
         layers: list[BaseLayer | BaseComposedLayer] = [

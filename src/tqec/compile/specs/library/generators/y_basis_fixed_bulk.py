@@ -34,6 +34,7 @@ from tqec.compile.blocks.layers.atomic.plaquettes import PlaquetteLayer
 from tqec.compile.blocks.layers.composed.base import BaseComposedLayer
 from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
 from tqec.compile.specs.base import YHalfCubeSpec
+from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquette, Plaquettes
 from tqec.plaquette.qubit import SquarePlaquetteQubits
 from tqec.plaquette.rpng.rpng import RPNGDescription
@@ -46,9 +47,14 @@ from tqec.utils.frozendefaultdict import FrozenDefaultDict
 from tqec.utils.scale import LinearFunction, PlaquetteScalable2D
 
 Basis = Literal["X", "Z"]
-# "hold" is an ordinary memory round on the full qubit patch, placed at the connected temporal
-# border so the temporal pipe consumes it (leaving the SWITCH transition round in the interior).
-RoundKind = Literal["switch", "pad", "final", "hold"]
+# The half cube emits three round kinds: the transition (SWITCH), the degenerate-patch
+# padding rounds (PAD), and the diagonal data readout (FINAL). There is
+# deliberately no HOLD/idle round --
+# SWITCH is the connected temporal border and sits directly on
+# the neighbour's held state
+# (see ``get_y_half_cube_block``); any state-preserving idling is left to be
+# handled macroscopically over the block graph.
+RoundKind = Literal["switch", "pad", "final"]
 
 # Interaction directions (matching the plaquette orderings used across TQEC).
 DIRS: list[complex] = [(0.5 + 0.5j) * 1j**d for d in range(4)]
@@ -62,7 +68,9 @@ _DIR_TO_CORNER = {UL: 0, UR: 1, DL: 2, DR: 3}
 _SYNDROME = 4
 
 # Data-qubit operations shared between neighbouring plaquettes are deduplicated on merge.
-_MERGEABLE = frozenset({"H", "MX", "MY", "MZ", "M", "RX", "RY", "RZ", "R", "S", "S_DAG"})
+_MERGEABLE = frozenset(
+    {"H", "MX", "MY", "MZ", "M", "RX", "RY", "RZ", "R", "S", "S_DAG"}
+)
 
 
 def _flipped(b: Basis) -> Basis:
@@ -105,7 +113,9 @@ def _checkerboard_basis(q: complex, top_left_tile_basis: Basis) -> Basis:
     return top_left_tile_basis
 
 
-def _surface_code_patch(possible_data_qubits, basis, is_boundary_x, is_boundary_z, order_func):
+def _surface_code_patch(
+    possible_data_qubits, basis, is_boundary_x, is_boundary_z, order_func
+):
     possible_data_qubits = set(possible_data_qubits)
     possible_measure_qubits = {q + d for q in possible_data_qubits for d in DIRS}
     measure_qubits = {
@@ -116,13 +126,16 @@ def _surface_code_patch(possible_data_qubits, basis, is_boundary_x, is_boundary_
         if is_boundary_z(m) <= (basis(m) == "Z")
     }
     data_qubits = {
-        q for q in possible_data_qubits if sum(q + d in measure_qubits for d in DIRS) > 1
+        q
+        for q in possible_data_qubits
+        if sum(q + d in measure_qubits for d in DIRS) > 1
     }
     tiles = tuple(
         _Tile(
             basis=basis(m),
             data_qubits=tuple(
-                m + d if d is not None and m + d in data_qubits else None for d in order_func(m)
+                m + d if d is not None and m + d in data_qubits else None
+                for d in order_func(m)
             ),
             measure_qubit=m,
         )
@@ -131,7 +144,9 @@ def _surface_code_patch(possible_data_qubits, basis, is_boundary_x, is_boundary_
     return _Patch(tiles)
 
 
-def _rectangular_patch(width, height, top_basis, bot_basis, left_basis, right_basis, order_func):
+def _rectangular_patch(
+    width, height, top_basis, bot_basis, left_basis, right_basis, order_func
+):
     def is_boundary(m: complex, *, b: Basis) -> bool:
         if top_basis == b and m.imag == -0.5:
             return True
@@ -145,7 +160,9 @@ def _rectangular_patch(width, height, top_basis, bot_basis, left_basis, right_ba
 
     return _surface_code_patch(
         possible_data_qubits=[x + 1j * y for x in range(width) for y in range(height)],
-        basis=lambda q: _checkerboard_basis(q, "Z"),  # fixed_bulk: top-left tile basis is Z
+        basis=lambda q: _checkerboard_basis(
+            q, "Z"
+        ),  # fixed_bulk: top-left tile basis is Z
         is_boundary_x=lambda m: is_boundary(m, b="X"),
         is_boundary_z=lambda m: is_boundary(m, b="Z"),
         order_func=order_func,
@@ -174,7 +191,9 @@ def _degenerate_patch(distance: int, top: Basis) -> _Patch:
     else:
         top_b = right_b = "X"
         left_b = bot_b = "Z"
-    return _rectangular_patch(distance, distance, top_b, bot_b, left_b, right_b, _order_func(top))
+    return _rectangular_patch(
+        distance, distance, top_b, bot_b, left_b, right_b, _order_func(top)
+    )
 
 
 def _split_ul_md_dr(ps: Iterable[complex], distance: int):
@@ -211,21 +230,27 @@ def _final_measure_data_basis(data_qubits, top: Basis) -> dict[complex, Basis]:
     return {q: ("X" if q.real <= q.imag else "Z") for q in data_qubits}
 
 
-def _standard_round(patch: _Patch, measure_data_basis: dict[complex, Basis] | None = None) -> Round:
+def _standard_round(
+    patch: _Patch, measure_data_basis: dict[complex, Basis] | None = None
+) -> Round:
     measure_data_basis = measure_data_basis or {}
     xs = [t for t in patch.tiles if t.basis == "X"]
     zs = [t for t in patch.tiles if t.basis == "Z"]
-    moments: Round = [[
-        ("RX", [t.measure_qubit for t in xs]),
-        ("R", [t.measure_qubit for t in zs]),
-    ]]
+    moments: Round = [
+        [
+            ("RX", [t.measure_qubit for t in xs]),
+            ("R", [t.measure_qubit for t in zs]),
+        ]
+    ]
     for k in range(4):
         pairs = []
         for t in patch.tiles:
             dq = t.data_qubits[k]
             if dq is None:
                 continue
-            pairs.append((dq, t.measure_qubit) if t.basis == "Z" else (t.measure_qubit, dq))
+            pairs.append(
+                (dq, t.measure_qubit) if t.basis == "Z" else (t.measure_qubit, dq)
+            )
         moments.append([("CX", pairs)])
     meas: Moment = [("MX", [t.measure_qubit for t in xs])]
     for basis, gate in (("X", "MX"), ("Z", "M")):
@@ -265,49 +290,80 @@ def _transition_round(distance: int, top: Basis) -> Round:
 
     r: Round = []
     r.append([("RX", list((xs - new_x) | old_x)), ("R", list((zs - new_z) | old_z))])
-    r.append([
-        ("CX", _toward(xs - new_x, nx[-1], +1, used)),
-        ("CX", _toward(zs - new_z, nz[-1], -1, used)),
-    ])
-    r.append([
-        ("CX", _toward(xs - new_x, nx[-2], +1, used)),
-        ("CX", _toward(zs - new_z, nz[-2], -1, used)),
-    ])
-    r.append([
-        ("CX", _toward(xs_ul, nx[-3], -1, used)),
-        ("CX", _toward(zs_ul | zs_md, nz[-3], +1, used)),
-        ("CY", _toward(xs_md, nx[-3], +1, used)),
-        ("CX", _toward(xs_dr, nx[-3], +1, used)),
-        ("CX", _toward(zs_dr, nz[-3], -1, used)),
-    ])
-    r.append([
-        ("CX", _toward(xs_ul, nx[-1], -1, used)),
-        ("CX", _toward(zs_ul, nx[-1], +1, used)),
-        ("CX", _toward(xs_dr, nx[-4], +1, used)),
-        ("CX", _toward(zs_dr, nz[-4], -1, used)),
-    ])
+    r.append(
+        [
+            ("CX", _toward(xs - new_x, nx[-1], +1, used)),
+            ("CX", _toward(zs - new_z, nz[-1], -1, used)),
+        ]
+    )
+    r.append(
+        [
+            ("CX", _toward(xs - new_x, nx[-2], +1, used)),
+            ("CX", _toward(zs - new_z, nz[-2], -1, used)),
+        ]
+    )
+    r.append(
+        [
+            ("CX", _toward(xs_ul, nx[-3], -1, used)),
+            ("CX", _toward(zs_ul | zs_md, nz[-3], +1, used)),
+            ("CY", _toward(xs_md, nx[-3], +1, used)),
+            ("CX", _toward(xs_dr, nx[-3], +1, used)),
+            ("CX", _toward(zs_dr, nz[-3], -1, used)),
+        ]
+    )
+    r.append(
+        [
+            ("CX", _toward(xs_ul, nx[-1], -1, used)),
+            ("CX", _toward(zs_ul, nx[-1], +1, used)),
+            ("CX", _toward(xs_dr, nx[-4], +1, used)),
+            ("CX", _toward(zs_dr, nz[-4], -1, used)),
+        ]
+    )
     r.append([("CY", _toward(zs_md - old_z, nz[-1], -1, used))])
-    r.append([
-        ("H", [q for q in used if q.real + q.imag < distance - 1]),
-        ("S", [q for q in used if q.real + q.imag == distance - 1 and q.real % 1 == 0.5]),
-    ])
+    r.append(
+        [
+            ("H", [q for q in used if q.real + q.imag < distance - 1]),
+            (
+                "S",
+                [
+                    q
+                    for q in used
+                    if q.real + q.imag == distance - 1 and q.real % 1 == 0.5
+                ],
+            ),
+        ]
+    )
     my_target = complex(0, distance - 1) if top == "X" else complex(distance - 1, 0)
-    r.append([
-        ("MX", list((xs - old_x) | new_x)),
-        ("MY", [my_target]),
-        ("M", list((zs - old_z) | new_z)),
-    ])
+    r.append(
+        [
+            ("MX", list((xs - old_x) | new_x)),
+            ("MY", [my_target]),
+            ("M", list((zs - old_z) | new_z)),
+        ]
+    )
     return r
 
 
 _REV_GATE = {
-    "R": "M", "M": "R", "RX": "MX", "MX": "RX", "RY": "MY", "MY": "RY",
-    "H": "H", "S": "S_DAG", "S_DAG": "S", "CX": "CX", "CY": "CY", "CZ": "CZ",
+    "R": "M",
+    "M": "R",
+    "RX": "MX",
+    "MX": "RX",
+    "RY": "MY",
+    "MY": "RY",
+    "H": "H",
+    "S": "S_DAG",
+    "S_DAG": "S",
+    "CX": "CX",
+    "CY": "CY",
+    "CZ": "CZ",
 }
 
 
 def _time_reverse(rnd: Round) -> Round:
-    return [[(_REV_GATE[g], targets) for g, targets in moment] for moment in reversed(rnd)]
+    return [
+        [(_REV_GATE[g], targets) for g, targets in moment] for moment in reversed(rnd)
+    ]
 
 
 # --------------------------------------------------------------------------------------------
@@ -317,7 +373,9 @@ def _is_syndrome(q: complex) -> bool:
     return q.real % 1 != 0
 
 
-def _decompose_round(rnd: Round) -> dict[complex, dict[int, list[tuple[str, tuple[int, ...]]]]]:
+def _decompose_round(
+    rnd: Round,
+) -> dict[complex, dict[int, list[tuple[str, tuple[int, ...]]]]]:
     """Decompose a round into per-syndrome local ops keyed by timestep.
 
     Returns ``{syndrome: {timestep: [(gate, local_indices), ...]}}``. Single-qubit ops on data
@@ -331,7 +389,7 @@ def _decompose_round(rnd: Round) -> dict[complex, dict[int, list[tuple[str, tupl
     for moment in rnd:
         for _, targets in moment:
             for t in targets:
-                for q in (t if isinstance(t, tuple) else (t,)):
+                for q in t if isinstance(t, tuple) else (t,):
                     if _is_syndrome(q):
                         syndromes.add(q)
 
@@ -349,7 +407,9 @@ def _decompose_round(rnd: Round) -> dict[complex, dict[int, list[tuple[str, tupl
                     pair = (_SYNDROME, corner) if a == s else (corner, _SYNDROME)
                     per_syn.setdefault(s, {}).setdefault(ts, []).append((gate, pair))
                 elif _is_syndrome(t):
-                    per_syn.setdefault(t, {}).setdefault(ts, []).append((gate, (_SYNDROME,)))
+                    per_syn.setdefault(t, {}).setdefault(ts, []).append(
+                        (gate, (_SYNDROME,))
+                    )
                 else:
                     for dirc, corner in _DIR_TO_CORNER.items():
                         s = t - dirc
@@ -378,14 +438,16 @@ def _canonical_key(ops_by_ts: dict[int, list[tuple[str, tuple[int, ...]]]]):
     return tuple((ts, tuple(sorted(ops_by_ts[ts]))) for ts in sorted(ops_by_ts))
 
 
-def _round_moment_list(distance: int, top: Basis, kind: RoundKind, reverse: bool) -> Round:
+def _round_moment_list(
+    distance: int, top: Basis, kind: RoundKind, reverse: bool
+) -> Round:
     if kind == "switch":
         rnd = _transition_round(distance, top)
-    elif kind == "hold":
-        rnd = _standard_round(_qubit_patch(distance, top))
     else:
         patch = _degenerate_patch(distance, top)
-        mdb = _final_measure_data_basis(patch.data_set, top) if kind == "final" else None
+        mdb = (
+            _final_measure_data_basis(patch.data_set, top) if kind == "final" else None
+        )
         rnd = _standard_round(patch, mdb)
     return _time_reverse(rnd) if reverse else rnd
 
@@ -409,7 +471,9 @@ def _role_map(top: Basis, kind: RoundKind, reverse: bool):
     plaq_of = {}
     for i, key in enumerate(sorted(keys, key=repr), start=1):
         index_of[key] = i
-        plaq_of[i] = _plaquette_from_local_ops(keys[key], f"y_{kind}_{'r' if reverse else 'f'}_{i}")
+        plaq_of[i] = _plaquette_from_local_ops(
+            keys[key], f"y_{kind}_{'r' if reverse else 'f'}_{i}"
+        )
     return index_of, plaq_of
 
 
@@ -470,8 +534,13 @@ class _YRoundTemplate(RectangularTemplate):
         )
 
 
-# The canonical "no plaquette" filling empty template cells (index 0), matching the RPNG path.
-_EMPTY_PLAQUETTE = DefaultRPNGTranslator().translate(RPNGDescription.empty())
+# The canonical "no plaquette" filling empty template cells (index 0). It must be *identical* to
+# the empty plaquette produced by the ordinary RPNG generator path (translator + identity
+# compiler), otherwise merging a Y half cube in parallel with a normal cube raises "several
+# different default factories" when combining their ``Plaquettes`` default values.
+_EMPTY_PLAQUETTE = IdentityPlaquetteCompiler.compile(
+    DefaultRPNGTranslator().translate(RPNGDescription.empty())
+)
 
 
 def _y_round_plaquettes(top: Basis, kind: RoundKind, reverse: bool) -> Plaquettes:
@@ -488,30 +557,51 @@ def _round_layer(top: Basis, kind: RoundKind, reverse: bool) -> PlaquetteLayer:
     )
 
 
-def get_y_half_cube_block(y_spec: YHalfCubeSpec) -> LayeredBlock:
+def get_y_half_cube_block(
+    y_spec: YHalfCubeSpec, pad_repetitions: LinearFunction | None = None
+) -> LayeredBlock:
     """Build the fixed-bulk Y half-cube as a native Templates/Plaquettes :class:`LayeredBlock`.
 
-    The measurement half cube is ``[SWITCH, PAD x ceil(d/2), FINAL]`` (one transition round,
-    ``d // 2`` padding rounds on the degenerate patch, one data-readout round); the initialization
-    half cube is its exact time reverse. Detectors are recovered downstream by ``tqecd``.
+    The measurement half cube is ``[SWITCH, PAD x pad_repetitions, FINAL]`` (one transition round,
+    ``pad_repetitions`` padding rounds on the degenerate patch, one data-readout round); the
+    initialization half cube is its exact time reverse. Detectors are recovered downstream by
+    ``tqecd``.
+
+    Args:
+        y_spec: the Y half-cube specification (orientation and init/measure role).
+        pad_repetitions: number of degenerate-patch PAD rounds. Unlike the generic HOLD/idle, the
+            PAD is *specific to the Y half cube* -- it is the timelike-error suppression of the
+            transition. Defaults to ``d // 2 = k`` (``LinearFunction(1, 0)``), the minimum for full
+            distance (``ceil(d/2)`` effective rounds counting FINAL) and hence the best LER for a
+            standalone Y memory. Compilation overrides it with the shared ``block_temporal_height``
+            so the half cube's temporal footprint matches neighbouring cubes it may be merged with
+            in parallel (see ``FixedBulkCubeBuilder``); this is the same controllable temporal
+            height used for ordinary cubes' memory rounds.
+
     """
     top: Basis = "X" if y_spec.horizontal_boundary_basis == TQECBasis.X else "Z"
-    # padding_rounds = distance // 2 = k
-    padding = LinearFunction(1, 0)
+    # PAD default = distance // 2 = k rounds (ceil(d/2) effective, counting the FINAL round).
+    padding = pad_repetitions if pad_repetitions is not None else LinearFunction(1, 0)
+    # The transition (SWITCH) round is the *connected* temporal border of the half cube; it must
+    # sit directly on top of the neighbouring cube's held state. The neighbour's final layer is
+    # stripped and its state fed straight into SWITCH by the temporal-pipe composition (see
+    # ``TopologicalComputationGraph._replace_temporal_borders``). We therefore emit *no* HOLD/idle
+    # round here (hold = 0): closing SWITCH tight against the neighbour keeps the twist adjacent to
+    # the code it transforms, which the detector search needs and which minimises the LER. A
+    # non-zero hold would be an idle that *preserves* the neighbour's state (repeated stalled
+    # rounds), used only to (1) probe robustness of a standalone Y memory or (2) temporally
+    # separate the Y cross-line twist from spatially-adjacent braiding blocks; that idling is a
+    # generic block concern, not baked into the transition here.
     if y_spec.initialization:
-        # Prepared state read out (open Z-), then reverse padding/transition, then a memory HOLD
-        # at the connected Z+ border (consumed by the temporal pipe to the neighbour above).
+        # data init (open Z-), reverse padding, then the reverse transition at the connected Z+.
         layers: list[BaseLayer | BaseComposedLayer] = [
             _round_layer(top, "final", True),
             RepeatedLayer(_round_layer(top, "pad", True), repetitions=padding),
             _round_layer(top, "switch", True),
-            _round_layer(top, "hold", True),
         ]
     else:
-        # A memory HOLD at the connected Z- border (consumed by the temporal pipe to the neighbour
-        # below), then the transition, padding, and data readout (open Z+).
+        # the transition at the connected Z- border, then padding and data readout (open Z+).
         layers = [
-            _round_layer(top, "hold", False),
             _round_layer(top, "switch", False),
             RepeatedLayer(_round_layer(top, "pad", False), repetitions=padding),
             _round_layer(top, "final", False),
@@ -559,7 +649,10 @@ def y_observable_local_coords(distance: int, top: Basis) -> list[tuple[float, fl
     qubits at integer and measure qubits at half-integer coordinates, which is the patch
     coordinate system shifted by ``(1, 1)``.
     """
-    return [(q.real + 1.0, q.imag + 1.0) for q in _y_observable_measure_qubits(distance, top)]
+    return [
+        (q.real + 1.0, q.imag + 1.0)
+        for q in _y_observable_measure_qubits(distance, top)
+    ]
 
 
 def y_corner_local_coord(distance: int, top: Basis) -> tuple[float, float]:

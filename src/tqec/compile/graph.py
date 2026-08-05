@@ -109,7 +109,31 @@ def substitute_plaquettes(
         if si in target.plaquettes.collection
     }
     new_plaquettes = target.plaquettes.with_updated_plaquettes(plaquettes_mapping)
-    return PlaquetteLayer(target.template, new_plaquettes, target.trimmed_spatial_borders)
+    return PlaquetteLayer(
+        target.template, new_plaquettes, target.trimmed_spatial_borders
+    )
+
+
+def _is_transition_temporal_border(layer: BaseLayer) -> bool:
+    """Whether ``layer`` is a Y half-cube transition (SWITCH) round.
+
+    A transition round is the *connected* temporal face of a Y half cube. Unlike an ordinary
+    init/measure border it must **not** be stripped by a connecting temporal pipe: the twist it
+    applies has to sit directly on the code it transforms (the neighbouring cube's held state) for
+    the seam detectors to be recoverable. When such a border is detected we skip its replacement --
+    the neighbour's border is stripped instead -- so no extra round is inserted between the
+    neighbour and the transition.
+    """
+    # Lazy import to keep this core module free of a convention-specific dependency.
+    from tqec.compile.specs.library.generators.y_basis_fixed_bulk import (  # noqa: PLC0415
+        _YRoundTemplate,
+    )
+
+    if not isinstance(layer, PlaquetteLayer):
+        return False
+    return (
+        isinstance(layer.template, _YRoundTemplate) and layer.template.kind == "switch"
+    )
 
 
 class TopologicalComputationGraph:
@@ -127,8 +151,12 @@ class TopologicalComputationGraph:
         # same layer of at least one temporal Hadamard pipe.
         # We use the bottom cube position `z` to store the temporal pipe, s.t.
         # the pipe is actually at the position `z+0.5`
-        self._temporal_pipes_at_hadamard_layer: dict[LayoutPosition3D, LayeredBlock] = {}
-        self._scalable_qubit_shape: Final[PhysicalQubitScalable2D] = scalable_qubit_shape
+        self._temporal_pipes_at_hadamard_layer: dict[
+            LayoutPosition3D, LayeredBlock
+        ] = {}
+        self._scalable_qubit_shape: Final[PhysicalQubitScalable2D] = (
+            scalable_qubit_shape
+        )
         self._observables: list[AbstractObservable] | None = observables
         self._observable_builder = observable_builder
 
@@ -136,7 +164,10 @@ class TopologicalComputationGraph:
     def layout_positions(self) -> set[LayoutPosition3D]:
         """Get all the positions at which a block has been added."""
         return set(self._layered_blocks.keys()).union(
-            {LayoutPosition3D.from_block_position(p) for p in self._injected_blocks.keys()}
+            {
+                LayoutPosition3D.from_block_position(p)
+                for p in self._injected_blocks.keys()
+            }
         )
 
     def add_cube(self, position: BlockPosition3D, block: Block) -> None:
@@ -218,7 +249,9 @@ class TopologicalComputationGraph:
                 f"Cannot add a pipe between {source:=} and {sink:=}: the sink is not in the graph."
             )
 
-    def _check_spatial_pipe(self, source: BlockPosition3D, sink: BlockPosition3D) -> None:
+    def _check_spatial_pipe(
+        self, source: BlockPosition3D, sink: BlockPosition3D
+    ) -> None:
         """Check the validity of a spatial pipe between ``source`` and ``sink``.
 
         Args:
@@ -250,7 +283,9 @@ class TopologicalComputationGraph:
                 f"({self._scalable_qubit_shape}) but got {block.scalable_shape}."
             )
 
-    def _trim_cube_spatial_borders(self, source: BlockPosition3D, sink: BlockPosition3D) -> None:
+    def _trim_cube_spatial_borders(
+        self, source: BlockPosition3D, sink: BlockPosition3D
+    ) -> None:
         """Trim the correct border from the cubes in ``source`` and ``sink``.
 
         This method trims 1 border on each of the cubes at the provided
@@ -286,12 +321,12 @@ class TopologicalComputationGraph:
         sink_border = border_from_signed_direction(SignedDirection3D(juncdir, False))
         assert isinstance(source_border, SpatialBlockBorder)
         assert isinstance(sink_border, SpatialBlockBorder)
-        self._layered_blocks[psource] = self._layered_blocks[psource].with_spatial_borders_trimmed(
-            [source_border]
-        )
-        self._layered_blocks[psink] = self._layered_blocks[psink].with_spatial_borders_trimmed(
-            [sink_border]
-        )
+        self._layered_blocks[psource] = self._layered_blocks[
+            psource
+        ].with_spatial_borders_trimmed([source_border])
+        self._layered_blocks[psink] = self._layered_blocks[
+            psink
+        ].with_spatial_borders_trimmed([sink_border])
 
     def _substitute_part_of_spatial_pipe(
         self,
@@ -320,7 +355,9 @@ class TopologicalComputationGraph:
 
         """
         pipe_block = self._layered_blocks[pipe_pos]
-        pipe_layer_to_replace = pipe_block.get_temporal_layer_on_border(temporal_pipe_border)
+        pipe_layer_to_replace = pipe_block.get_temporal_layer_on_border(
+            temporal_pipe_border
+        )
         if not isinstance(pipe_layer_to_replace, PlaquetteLayer):
             raise NotImplementedError(
                 "Due to the insertion of a temporal pipe, we need to replace "
@@ -357,7 +394,9 @@ class TopologicalComputationGraph:
             layer_on_top_of_block = layer.with_spatial_borders_trimmed(
                 block.trimmed_spatial_borders
             )
-        new_block = block.with_temporal_borders_replaced({block_border: layer_on_top_of_block})
+        new_block = block.with_temporal_borders_replaced(
+            {block_border: layer_on_top_of_block}
+        )
         assert new_block is not None, "No layer removal happened, only replacement"
         self._layered_blocks[pblock] = new_block
         # Then, if the block has no trimmed spatial border (i.e., no spatial
@@ -391,22 +430,51 @@ class TopologicalComputationGraph:
                 "valid temporal pipe. Spatial and temporal pipes should "
                 "be handled separately."
             )
-        # Source
-        if source not in self._injected_blocks:
+        # Source. Skip if the source's connected (Z+) border is a Y transition round: it must be
+        # preserved so the transition sits directly on the neighbour's held state (see
+        # ``_is_transition_temporal_border``). The neighbour's border below is stripped instead.
+        if (
+            source not in self._injected_blocks
+            and not self._temporal_border_is_transition(
+                source, TemporalBlockBorder.Z_POSITIVE
+            )
+        ):
             self._replace_temporal_border(
                 source,
                 TemporalBlockBorder.Z_POSITIVE,
                 block.get_atomic_temporal_border(TemporalBlockBorder.Z_NEGATIVE),
             )
-        # Sink
-        if sink not in self._injected_blocks:
+        # Sink. Skip if the sink's connected (Z-) border is a Y transition round (same reason).
+        if (
+            sink not in self._injected_blocks
+            and not self._temporal_border_is_transition(
+                sink, TemporalBlockBorder.Z_NEGATIVE
+            )
+        ):
             self._replace_temporal_border(
                 sink,
                 TemporalBlockBorder.Z_NEGATIVE,
                 block.get_atomic_temporal_border(TemporalBlockBorder.Z_POSITIVE),
             )
 
-    def add_pipe(self, source: BlockPosition3D, sink: BlockPosition3D, block: LayeredBlock) -> None:
+    def _temporal_border_is_transition(
+        self, block_pos: BlockPosition3D, border: TemporalBlockBorder
+    ) -> bool:
+        """Whether the block at ``block_pos`` has a transition round on its ``border``."""
+        block = self._layered_blocks.get(
+            LayoutPosition3D.from_block_position(block_pos)
+        )
+        if block is None:
+            return False
+        try:
+            layer = block.get_atomic_temporal_border(border)
+        except TQECError:
+            return False
+        return _is_transition_temporal_border(layer)
+
+    def add_pipe(
+        self, source: BlockPosition3D, sink: BlockPosition3D, block: LayeredBlock
+    ) -> None:
         """Add the provided block as a pipe between ``source`` and ``sink``.
 
         Raises:
@@ -438,7 +506,9 @@ class TopologicalComputationGraph:
                 u_pos = LayoutPosition3D.from_block_position(source)
                 # We use the bottom cube position `z` to store the temporal pipe, s.t.
                 # the pipe is actually at the position `z+0.5`
-                self._temporal_pipes_at_hadamard_layer[u_pos] = block_trimmed_temporal_borders
+                self._temporal_pipes_at_hadamard_layer[u_pos] = (
+                    block_trimmed_temporal_borders
+                )
         else:  # block is a spatial pipe
             self._trim_cube_spatial_borders(source, sink)
             key = LayoutPosition3D.from_pipe_position((source, sink))
@@ -470,7 +540,9 @@ class TopologicalComputationGraph:
         sublayers_by_z: list[SequencedLayers] = []
         for z in ordered_zs:
             blocks_at_z = {
-                pos.as_2d(): block for pos, block in self._layered_blocks.items() if pos.z == z
+                pos.as_2d(): block
+                for pos, block in self._layered_blocks.items()
+                if pos.z == z
             }
             hadamard_pipe_at_z = {
                 pos.as_2d(): pipe
@@ -480,7 +552,9 @@ class TopologicalComputationGraph:
             sublayers_by_z.append(
                 SequencedLayers(
                     merge_parallel_block_layers(blocks_at_z, self._scalable_qubit_shape)
-                    + merge_parallel_block_layers(hadamard_pipe_at_z, self._scalable_qubit_shape),
+                    + merge_parallel_block_layers(
+                        hadamard_pipe_at_z, self._scalable_qubit_shape
+                    ),
                     z_coordinate=z,
                 )
             )
@@ -581,7 +655,9 @@ class TopologicalComputationGraph:
 
         # aggregate circuits by combining elements in the iterator
         # until you get to one that ends in 'TICK'
-        def aggregate_circuits(circuit_iter: Iterator[stim.Circuit]) -> Iterator[stim.Circuit]:
+        def aggregate_circuits(
+            circuit_iter: Iterator[stim.Circuit],
+        ) -> Iterator[stim.Circuit]:
             current_circuit = stim.Circuit()
             for circuit in circuit_iter:
                 current_circuit += circuit

@@ -30,7 +30,7 @@ from tqec.compile.tree.annotators.observables import (
     _annotate_observable_at_node,
     _annotate_y_observable_at_node,
     get_ordered_leaves,
-    y_switch_top_basis,
+    y_switch_top_by_position,
 )
 from tqec.utils.coordinates import StimCoordinates
 from tqec.utils.exceptions import TQECError
@@ -326,8 +326,8 @@ class LayerNode:
                             # annotated separately from the top/bottom face components above.
                             if obs_slice.y_half_cubes:
                                 for leaf in leaves:
-                                    y_top = y_switch_top_basis(leaf)
-                                    if y_top is None:
+                                    top_by_position = y_switch_top_by_position(leaf)
+                                    if not top_by_position:
                                         continue
                                     y_partial = partial(
                                         _annotate_y_observable_at_node,
@@ -335,7 +335,7 @@ class LayerNode:
                                         k=k,
                                         observable_index=obs_idx,
                                         observable_builder=ctx.observable_builder,
-                                        y_top=y_top,
+                                        top_by_position=top_by_position,
                                     )
                                     leaf_dict.setdefault(leaf, []).append(
                                         (y_partial, ObservableComponent.BOTTOM_STABILIZERS)
