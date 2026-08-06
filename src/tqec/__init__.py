@@ -4,3 +4,4 @@ from .computation.block_graph import BlockGraph as BlockGraph
 from .utils import Basis as Basis
 from .utils import NoiseModel as NoiseModel
 from .utils import PauliBasis as PauliBasis
+from .utils import transpile_to_si1000_gateset as transpile_to_si1000_gateset
