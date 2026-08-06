@@ -6,7 +6,10 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Final, Protocol
 
-import gen
+try:  # ``gen`` is only needed by the legacy gen-based InjectedBlock path, not by the
+    import gen  # native fixed-bulk Y-half-cube generator; make it optional so tqec imports gen-free.
+except ImportError:  # pragma: no cover
+    gen = None  # type: ignore[assignment]
 import stim
 from typing_extensions import override
 
