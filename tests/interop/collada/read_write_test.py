@@ -112,6 +112,31 @@ def test_y_cube_positioning_during_roundtrip() -> None:
     os.remove(temp_file.name)
 
 
+def test_dae_roundtrip_preserves_y_cube_position_above_origin() -> None:
+    """Y half cubes at z > 0 must survive a write -> read round-trip.
+
+    Before this fix, offset_y_cube_position(pos, pipe_length) divided z by
+    (1 + pipe_length) and int_position_before_scale(..., pipe_length) did so
+    again, scaling Y cube z down by an extra factor of (1 + pipe_length).
+    A Y at TQEC (1,1,3) landed at (1,1,1), colliding with any cube there.
+    """
+    g = BlockGraph()
+    g.add_cube(Position3D(1, 1, 1), ZXCube.from_str("XZZ"))
+    g.add_cube(Position3D(1, 1, 2), ZXCube.from_str("XZZ"))
+    g.add_cube(Position3D(1, 1, 3), YHalfCube())
+    g.add_pipe(Position3D(1, 1, 1), Position3D(1, 1, 2), PipeKind.from_str("XZO"))
+    g.add_pipe(Position3D(1, 1, 2), Position3D(1, 1, 3), PipeKind.from_str("XZO"))
+
+    with tempfile.NamedTemporaryFile(suffix=".dae", delete=False) as temp_file:
+        g.to_dae_file(temp_file.name)
+        block_graph_from_file = BlockGraph.from_dae_file(temp_file.name)
+
+    y_cubes = [c for c in block_graph_from_file.cubes if isinstance(c.kind, YHalfCube)]
+    assert len(y_cubes) == 1
+    assert y_cubes[0].position == Position3D(1, 1, 3)
+    os.remove(temp_file.name)
+
+
 def test_collada_write_read_with_correlation_surface() -> None:
     block_graph = cnot(Basis.X)
     correlation_surfaces = block_graph.find_correlation_surfaces()
@@ -148,27 +173,3 @@ def test_y_cube_init_meas_roundtrip(pipe_length: float, y_is_init: bool) -> None
         g2 = BlockGraph.from_dae_file(f.name)
     os.remove(f.name)
     assert g2 == g
-
-
-def test_dae_roundtrip_preserves_y_cube_position_above_origin():
-    """Y half cubes at z > 0 must survive a write -> read round-trip.
-
-    Before this fix, offset_y_cube_position(pos, pipe_length) divided z by
-    (1 + pipe_length) and int_position_before_scale(..., pipe_length) did so
-    again, scaling Y cube z down by an extra factor of (1 + pipe_length).
-    A Y at TQEC (1,1,3) landed at (1,1,1), colliding with any cube there.
-    """
-    g = BlockGraph()
-    g.add_cube(Position3D(1, 1, 1), ZXCube.from_str("XZZ"))
-    g.add_cube(Position3D(1, 1, 2), ZXCube.from_str("XZZ"))
-    g.add_cube(Position3D(1, 1, 3), YHalfCube())
-    g.add_pipe(Position3D(1, 1, 1), Position3D(1, 1, 2), PipeKind.from_str("XZO"))
-    g.add_pipe(Position3D(1, 1, 2), Position3D(1, 1, 3), PipeKind.from_str("XZO"))
-
-    with tempfile.NamedTemporaryFile(suffix=".dae", delete=False) as f:
-        g.to_dae_file(f.name)
-        g2 = BlockGraph.from_dae_file(f.name)
-
-    y_cubes = [c for c in g2.cubes if isinstance(c.kind, YHalfCube)]
-    assert len(y_cubes) == 1
-    assert y_cubes[0].position == Position3D(1, 1, 3)
