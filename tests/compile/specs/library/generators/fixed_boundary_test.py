@@ -88,7 +88,7 @@ def test_get_spatial_cube_qubit_rpng_descriptions_none_spatial_arms(generator):
         spatial_boundary_basis=Basis.X, arms=SpatialArms.NONE, is_reversed=True
     )
     assert len(result) == 16
-    assert str(result[5]) == "---- -x3- -x4- -x1-"
+    assert str(result[5]) == "---- -X3- -X4- -X1-"
 
 
 def test_get_spatial_cube_qubit_rpng_descriptions(generator):
