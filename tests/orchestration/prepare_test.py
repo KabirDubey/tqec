@@ -51,10 +51,8 @@ def test_prepare_eight_gadget_dae_yields_stable_ids(tmp_path: Path) -> None:
     second_ids = tuple(u.gadget_id for u in second.units)
     assert first_ids == _EIGHT_IDS
     assert second_ids == _EIGHT_IDS
-    # The fixed-bulk Y cube is unimplemented on this branch, so every gadget is a terminal
-    # COMPILE_FAILED record rather than crashing the whole batch.
-    assert all(u.status == UnitStatus.COMPILE_FAILED.value for u in first.units)
-    assert all(u.terminal for u in first.units)
+    # This branch implements the fixed-bulk Y half cube, so every gadget compiles.
+    assert all(u.status == UnitStatus.READY.value for u in first.units)
 
 
 def test_prepare_routes_by_input_type(tmp_path: Path) -> None:
@@ -80,7 +78,8 @@ def test_prepare_routes_by_input_type(tmp_path: Path) -> None:
 def test_prepare_records_and_prints_gadget_failure(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    config = BatchConfig(conventions=("fixed_bulk",), ks=(1,))
+    # The Y half cube is not implemented in the fixed boundary convention, so the Y gadgets fail.
+    config = BatchConfig(conventions=("fixed_boundary",), ks=(1,))
     manifest = prepare_batch([DAE_FIXTURE, memory(Basis.Z)], config, tmp_path / "run")
 
     failed = [u for u in manifest.units if u.terminal]
