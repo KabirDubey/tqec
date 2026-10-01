@@ -425,6 +425,26 @@ def test_compile_bell_state_with_single_temporal_hadamard(
     )
 
 
+@pytest.mark.parametrize("dz", (-1, 2))
+def test_compile_temporal_hadamard_with_nonzero_lowest_z(dz: int) -> None:
+    """A temporal Hadamard is placed on the right z slice when the graph does not start at z=0."""
+    g = BlockGraph("Bell State with a Temporal Hadamard")
+    n1 = g.add_cube(Position3D(0, 0, 0), "XZZ")
+    n2 = g.add_cube(Position3D(0, 1, 0), "XZZ")
+    n3 = g.add_cube(Position3D(0, 0, 1), "ZXZ")
+    n4 = g.add_cube(Position3D(0, 1, 1), "XZX")
+    g.add_pipe(n1, n2)
+    g.add_pipe(n1, n3)
+    g.add_pipe(n2, n4)
+
+    def circuit(graph: BlockGraph) -> stim.Circuit:
+        return compile_block_graph(graph).generate_stim_circuit(k=1)
+
+    shifted = g.shift_by(dz=dz)
+    assert min(cube.position.z for cube in shifted.cubes) == dz
+    assert circuit(shifted) == circuit(g)
+
+
 def test_compile_observable_with_unrelated_temporal_hadamard() -> None:
     """An unrelated temporal Hadamard must not affect an observable."""
     graph = BlockGraph("Observable with unrelated temporal Hadamard")
@@ -812,8 +832,7 @@ def test_compile_y_basis_memory(convention: Convention, pipe_kind: str, k: int) 
     g.add_pipe(n1, n2, pipe_kind)
 
     d = 2 * k + 1
-    # The Y half cube is intentionally unsupported in the fixed_boundary convention: its
-    # circuit generation is lossy there (native distance below the code distance), hence the
+    # The Y half cube is not implemented yet in the fixed_boundary convention, hence the
     # NotImplementedError raised in fixed_boundary.py. Assert on the raise rather than
     # narrowing the parametrization, so this fails loudly if support is ever added.
     if convention.name == "fixed_boundary":

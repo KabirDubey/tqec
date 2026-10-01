@@ -170,11 +170,7 @@ class FixedBoundaryCubeBuilder(CubeBuilder):
             raise TQECError("Cannot build a block for a Port.")
         elif kind is LeafCubeKind.Y_HALF_CUBE:
             raise NotImplementedError(
-                "The Y half cube is not yet implemented for the fixed_boundary "
-                "convention. Its circuit generation is lossy in this convention "
-                "(native distance below the code distance), so it is intentionally "
-                "unsupported pending a circuit-generation fix. Use the fixed_bulk "
-                "convention for Y-basis initialization/measurement."
+                "The Y half cube is not implemented yet in the fixed_boundary convention."
             )
         elif isinstance(kind, ConditionalCubeKind):
             raise NotImplementedError("Conditional cube is not implemented.")
@@ -213,7 +209,7 @@ class FixedBoundaryPipeBuilder(PipeBuilder):
         return self._call_impl(spec, block_temporal_height)
 
     @functools.cache
-    def _call_impl(self, spec: PipeSpec, block_temporal_height: LinearFunction) -> Block:
+    def _call_impl(self, spec: PipeSpec, block_temporal_height: LinearFunction) -> LayeredBlock:
         if spec.pipe_kind.is_temporal:
             return self.get_temporal_pipe_block(spec)
         return self.get_spatial_pipe_block(spec, block_temporal_height)

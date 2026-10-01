@@ -14,6 +14,8 @@ from tqec.compile.observables.builder import (
 from tqec.utils.position import BlockPosition2D
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from tqec.compile.tree.node import LayerNode
 
 
@@ -110,7 +112,7 @@ def _annotate_observable_at_node(
         node.get_annotations(k).observables.append(obs_annotation)
 
 
-def y_switch_top_by_position(leaf: LayerNode) -> dict[BlockPosition2D, str]:
+def y_switch_top_by_position(leaf: LayerNode) -> dict[BlockPosition2D, Literal["X", "Z"]]:
     """Map each Y half cube's block position to its transition (SWITCH) top boundary basis.
 
     The fixed-bulk Y logical (midline) is measured during the transition round, so a non-empty
@@ -125,7 +127,7 @@ def y_switch_top_by_position(leaf: LayerNode) -> dict[BlockPosition2D, str]:
         _YRoundTemplate,
     )
 
-    result: dict[BlockPosition2D, str] = {}
+    result: dict[BlockPosition2D, Literal["X", "Z"]] = {}
     layer = leaf._layer
     if not isinstance(layer, LayoutLayer):
         return result
@@ -146,7 +148,7 @@ def _annotate_y_observable_at_node(
     k: int,
     observable_index: int,
     observable_builder: ObservableBuilder,
-    top_by_position: dict[BlockPosition2D, str],
+    top_by_position: dict[BlockPosition2D, Literal["X", "Z"]],
     component: ObservableComponent | None = None,
 ) -> None:
     """Annotate the fixed-bulk Y-basis logical (midline) at the transition (SWITCH) round node.

@@ -217,7 +217,10 @@ def _make_correlation_surface(edges: list[tuple[int, Literal["Z", "X"]]]) -> Cor
     return CorrelationSurface(
         frozenset(
             {
-                ZXEdge(ZXNode(u[0], Basis(u[1])), ZXNode(v[0], Basis(v[1])))
+                ZXEdge(
+                    ZXNode(Position3D(u[0], 0, 0), Basis(u[1])),
+                    ZXNode(Position3D(v[0], 0, 0), Basis(v[1])),
+                )
                 for u, v in zip(edges[::2], edges[1::2])
             }
         )
