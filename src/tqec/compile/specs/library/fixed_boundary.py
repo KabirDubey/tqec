@@ -209,7 +209,7 @@ class FixedBoundaryPipeBuilder(PipeBuilder):
         return self._call_impl(spec, block_temporal_height)
 
     @functools.cache
-    def _call_impl(self, spec: PipeSpec, block_temporal_height: LinearFunction) -> Block:
+    def _call_impl(self, spec: PipeSpec, block_temporal_height: LinearFunction) -> LayeredBlock:
         if spec.pipe_kind.is_temporal:
             return self.get_temporal_pipe_block(spec)
         return self.get_spatial_pipe_block(spec, block_temporal_height)

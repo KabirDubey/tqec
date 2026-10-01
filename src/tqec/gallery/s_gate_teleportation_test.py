@@ -22,8 +22,8 @@ def test_s_gate_teleportation_open() -> None:
 def test_s_gate_teleportation_open_zx() -> None:
     g = s_gate_teleportation().to_zx_graph().g
     print(g.edge_set())
-    g.set_inputs((0,))  # type: ignore
-    g.set_outputs((2,))  # type: ignore
+    g.set_inputs((0,))
+    g.set_outputs((2,))
 
     c = zx.qasm("""
 qreg q[1];
