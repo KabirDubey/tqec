@@ -823,11 +823,6 @@ def test_compile_y_basis_memory(convention: Convention, pipe_kind: str, k: int) 
             )
         return
 
-    if k == 1 and pipe_kind == "XZO":
-        # Known failure, identical on the source branch kd/y-half-cube: at k=1 the Y memory with
-        # an XZO pipe has a graphlike fault distance of 1 instead of 3 (UNVERIFIED root cause).
-        pytest.xfail("Y memory (XZO, k=1) does not reach full fault distance in fixed_bulk.")
-
     generate_circuit_and_assert(
         g,
         k,
