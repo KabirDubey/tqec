@@ -812,8 +812,7 @@ def test_compile_y_basis_memory(convention: Convention, pipe_kind: str, k: int) 
     g.add_pipe(n1, n2, pipe_kind)
 
     d = 2 * k + 1
-    # The Y half cube is intentionally unsupported in the fixed_boundary convention: its
-    # circuit generation is lossy there (native distance below the code distance), hence the
+    # The Y half cube is not implemented yet in the fixed_boundary convention, hence the
     # NotImplementedError raised in fixed_boundary.py. Assert on the raise rather than
     # narrowing the parametrization, so this fails loudly if support is ever added.
     if convention.name == "fixed_boundary":

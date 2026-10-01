@@ -170,11 +170,7 @@ class FixedBoundaryCubeBuilder(CubeBuilder):
             raise TQECError("Cannot build a block for a Port.")
         elif kind is LeafCubeKind.Y_HALF_CUBE:
             raise NotImplementedError(
-                "The Y half cube is not yet implemented for the fixed_boundary "
-                "convention. Its circuit generation is lossy in this convention "
-                "(native distance below the code distance), so it is intentionally "
-                "unsupported pending a circuit-generation fix. Use the fixed_bulk "
-                "convention for Y-basis initialization/measurement."
+                "The Y half cube is not implemented yet in the fixed_boundary convention."
             )
         elif isinstance(kind, ConditionalCubeKind):
             raise NotImplementedError("Conditional cube is not implemented.")
