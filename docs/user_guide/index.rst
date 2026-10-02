@@ -22,7 +22,6 @@ User Guide
    :caption: Advanced topics
 
    Extended stabilizers implementation <extended_stabilizers_implementation>
-   Y half cubes <y_half_cube>
 
 .. toctree::
    :maxdepth: 1

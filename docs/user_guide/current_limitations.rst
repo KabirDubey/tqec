@@ -24,10 +24,6 @@ These kind of computation require special handling that is not currently impleme
 ``Y``-basis measurements
 ------------------------
 
-Y half cubes are only implemented for the fixed bulk convention, and conditional cubes (including
-conditional Y cubes) cannot be compiled. For ``k=1`` and an ``"XZO"`` pipe, the expected circuit-level distance
-is not reached with the current ``tqecd`` release. See :doc:`y_half_cube` for details.
-
 Walking codes
 -------------
 
