@@ -13,6 +13,30 @@ installation and how to build the documentation.
 - **Ask a question:** open an issue with the "Asking a question" template and give as much context as you can.
 - **Contribute code or documentation:** follow the steps below.
 
+## AI use
+
+You may use AI tools, such as large language models (LLMs), to help you contribute. You are responsible for
+everything you submit. Maintainers review contributions with these expectations:
+
+- **Be concise.** Keep issues, comments and PR descriptions short and specific. Long AI-generated text that repeats
+  what is already known, or does not answer the discussion, takes reviewers' time. It may be closed or marked as
+  off-topic without further review.
+- **Submit only code that can be verified.** Maintainers merge code only when they can check that it is correct, through
+  readable changes, tests and a clear explanation. A feature or bug fix that reviewers cannot test will not be merged.
+  In general, the more clearly verifiable evidence you present, the faster your PR will be merged.
+- **Understand your contribution.** Be ready to explain your changes and to answer reviewers' questions in your own
+  words. A PR whose author cannot answer questions about it may be closed.
+
+Repeatedly ignoring these expectations may lead to being blocked from the repository.
+
+### Saying how you used AI
+
+Please say at the start whether a text you post on GitHub was written with AI help. The pull request and issue templates
+have an "AI use" section for this, with four options: no AI tool, AI-assisted, mostly or entirely AI-written, and
+AI-translated. GitHub cannot add such a section to comments and reviews. If a comment was mostly written or translated
+by an AI tool, say so in its first line. Saying that you used AI is welcome and is never a reason to reject a
+contribution; it helps reviewers decide how to read it.
+
 ## Contribution steps
 
 ### 1. Find an issue
@@ -87,8 +111,9 @@ the rules specific to documentation changes.
 When your change is ready for review, or at least ready to be read by others,
 [open a pull request (PR)](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)
 against the `main` branch of tqec. Fill in the pull request template: explain what the change does, which issue it
-addresses and how you tested it. If the change is growing large, open a draft PR early so that others can look at it
-before it is finished.
+addresses and how you tested it, and complete the "AI use" section. A maintainer may close a PR whose description is
+empty, is missing the template's sections, or still contains the template's placeholder text. If the change is growing
+large, open a draft PR early so that others can look at it before it is finished.
 
 ### 6. Review and merge
 
