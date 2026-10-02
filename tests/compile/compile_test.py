@@ -831,7 +831,8 @@ def test_compile_y_basis_memory(request: pytest.FixtureRequest, pipe_kind: str, 
 
     if k == 1 and pipe_kind == "XZO":
         # tqecd 0.2.1 finds detectors giving distance 1 here; the minimal commuting cover fix
-        # (tqecd PR #74, unreleased) gives 3. Non-strict, as both builds report version 0.2.1.
+        # (tqecd PR #74, which needs a `tqecd` re-release) gives 3. Non-strict, as both builds
+        # report version 0.2.1.
         # Remove this marker when the tqecd pin is bumped to the release with the fix.
         request.applymarker(
             pytest.mark.xfail(
