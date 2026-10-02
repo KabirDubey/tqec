@@ -105,3 +105,33 @@ After the merge, delete your branch.
 - Ask in the issue you are working on, or open an issue with the "Asking a question" template.
 - Join the [weekly online meeting](https://meet.jit.si/TQEC-design-automation), every Wednesday at 8:30am Pacific
   time. It is used to discuss project progress and to give educational talks, and everyone is welcome.
+
+## Automated review with Greptile
+
+[Greptile](https://www.greptile.com) is an AI code review bot. It reviews pull requests to tqec automatically and posts
+its findings as comments. tqec uses Greptile through a free trial that lasts one year and ends in July 2027.
+
+- It is not a substitute for human review: a PR still needs a maintainer's approval to be merged.
+- How you use it, and whether you act on its comments, is up to you and your reviewers.
+
+### Interacting with Greptile
+
+Mention `@greptileai` in a PR comment to ask for a review or a specific check, for example
+`@greptileai are there code improvements I can make?`. Reply in its comment threads to discuss a finding, and react
+with a thumbs up or a thumbs down to tell it which kinds of comments are useful. Read
+[Developer essentials](https://www.greptile.com/docs/code-review/developer-essentials) to make the most of it.
+
+### Configuration
+
+Repository rules live in `.greptile/config.json`. It currently holds one rule: as part of its automatic review of every
+PR, Greptile checks that the PR description fills in the pull request template, and warns the author if it does not.
+
+The other settings are managed in the Greptile dashboard:
+
+- **Custom context:** Greptile reads project rule files such as `AGENTS.md` or `CLAUDE.md` when the repository
+  contains them ([Greptile changelog](https://www.greptile.com/docs/changelog)). tqec has no such file today, so
+  adding one changes what Greptile checks in reviews; treat such a PR as a change to the review policy.
+- **Code review:** comments from CI bots on GitHub are filtered out, Greptile is tuned to comment only on significant
+  issues, and its review comments are collapsed by default.
+
+To change the configuration, email kabir@u.northwestern.edu.
