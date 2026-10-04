@@ -49,9 +49,10 @@ GRAPHS = {
     "s_gate_z": lambda: _s_gate(PauliBasis.Z),
     "y_above_two_cubes": _y_above_two_cubes,
 }
-# Gadgets where a Y half cube is joined to an ``XZO`` pipe have a weight-1 logical error that is
-# independent of the detector bugs fixed here (it is also present with k = 1 before the fix).
-# Only determinism is asserted for them.
+# Where a Y half cube is joined to an ``XZO`` pipe, tqecd 0.2.1 misses the weight-3 detectors on
+# the SWITCH round's domain wall, which leaves a weight-1 logical error at every k. tqecd PR #74
+# (https://github.com/tqec/tqecd/pull/74) finds them and gives full distance; until tqec requires
+# a tqecd release with it, only determinism is asserted for these gadgets.
 FULL_DISTANCE = {"y_memory", "s_gate_z"}
 
 
@@ -72,6 +73,12 @@ def test_measurement_half_cube_emits_first_pad_round_outside_the_repetition() ->
         LinearFunction(2, -1),
         LinearFunction(0, 1),
     ]
+
+
+def test_constant_pad_repetitions_below_one_are_rejected() -> None:
+    spec = YHalfCubeSpec(horizontal_boundary_basis=Basis.Z, initialization=False)
+    with pytest.raises(ValueError, match="at least one PAD round"):
+        get_y_half_cube_block(spec, pad_repetitions=LinearFunction(0, 0))
 
 
 @pytest.mark.slow
