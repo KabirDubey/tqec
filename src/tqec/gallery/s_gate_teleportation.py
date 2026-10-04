@@ -1,18 +1,24 @@
 """Block graph that implements a logical S gate via gate teleportation."""
 
+from typing import Literal
+
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.cube import LeafCubeKind, ZXCube
 from tqec.utils.enums import PauliBasis
 from tqec.utils.position import Position3D
 
 
-def s_gate_teleportation(in_observable_basis: PauliBasis | None = None) -> BlockGraph:
+def s_gate_teleportation(
+    in_observable_basis: Literal[PauliBasis.X, PauliBasis.Z] | None = None,
+) -> BlockGraph:
     """Create a block graph representing S gate teleportation.
 
     Args:
-        in_observable_basis: The observable basis that goes into the block graph.
-            If None, the ports are left open. Otherwise, the ports are filled with
-            the given basis.
+        in_observable_basis: The basis of the observable at the ``In`` port, at the
+            bottom of the block graph. ``Z`` closes both ports in the Z basis (the
+            Z to Z flow). ``X`` initializes ``In`` in the X basis and measures
+            ``Out``, at the top, with a Y half cube (the X to Y flow). If None, the
+            ports are left open.
 
     Returns:
         A :py:class:`~tqec.computation.block_graph.BlockGraph` instance representing
@@ -39,8 +45,6 @@ def s_gate_teleportation(in_observable_basis: PauliBasis | None = None) -> Block
             g.fill_ports({"In": ZXCube.from_str("XZZ"), "Out": ZXCube.from_str("XZZ")})
         case PauliBasis.X:
             g.fill_ports({"In": ZXCube.from_str("XZX"), "Out": LeafCubeKind.Y_HALF_CUBE})
-        case PauliBasis.Y:
-            g.fill_ports({"In": LeafCubeKind.Y_HALF_CUBE, "Out": ZXCube.from_str("XZX")})
         case _:
             pass
     return g

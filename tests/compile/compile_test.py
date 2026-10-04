@@ -854,7 +854,7 @@ def test_compile_y_basis_memory(request: pytest.FixtureRequest, pipe_kind: str, 
 @pytest.mark.slow
 @pytest.mark.parametrize(
     ("k", "convention", "in_obs_basis"),
-    generate_inputs(CONVENTIONS, (PauliBasis.X, PauliBasis.Z, PauliBasis.Y)),
+    generate_inputs(CONVENTIONS, (PauliBasis.X, PauliBasis.Z)),
 )
 def test_compile_s_gate_teleportation(
     convention: Convention, in_obs_basis: PauliBasis, k: int
