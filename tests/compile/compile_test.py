@@ -821,6 +821,17 @@ def test_compile_steane_encoding(
     )
 
 
+# tqecd 0.2.1 misses the weight-3 detectors on the SWITCH round's domain wall when a Y half cube
+# meets an ``XZO`` pipe, which gives distance 1; the minimal commuting cover fix (tqecd PR #74,
+# which needs a ``tqecd`` re-release) gives 2k+1. Non-strict, as both builds report version 0.2.1.
+# Remove this marker when the tqecd pin is bumped to the release with the fix.
+_NEEDS_TQECD_PR74 = pytest.mark.xfail(
+    reason="needs the tqecd minimal commuting cover fix (tqecd PR #74)",
+    raises=AssertionError,
+    strict=False,
+)
+
+
 @pytest.mark.parametrize(("k", "pipe_kind"), generate_inputs(("ZXO", "XZO")))
 def test_compile_y_basis_memory(request: pytest.FixtureRequest, pipe_kind: str, k: int) -> None:
     # The Y half cube is only implemented in the fixed bulk convention.
@@ -829,18 +840,8 @@ def test_compile_y_basis_memory(request: pytest.FixtureRequest, pipe_kind: str, 
     n2 = g.add_cube(Position3D(0, 0, 1), "Y")
     g.add_pipe(n1, n2, pipe_kind)
 
-    if k == 1 and pipe_kind == "XZO":
-        # tqecd 0.2.1 finds detectors giving distance 1 here; the minimal commuting cover fix
-        # (tqecd PR #74, which needs a `tqecd` re-release) gives 3. Non-strict, as both builds
-        # report version 0.2.1.
-        # Remove this marker when the tqecd pin is bumped to the release with the fix.
-        request.applymarker(
-            pytest.mark.xfail(
-                reason="needs the tqecd minimal commuting cover fix (tqecd PR #74)",
-                raises=AssertionError,
-                strict=False,
-            )
-        )
+    if pipe_kind == "XZO":
+        request.applymarker(_NEEDS_TQECD_PR74)
 
     generate_circuit_and_assert(
         g,
@@ -856,9 +857,14 @@ def test_compile_y_basis_memory(request: pytest.FixtureRequest, pipe_kind: str, 
     ("k", "in_obs_basis"),
     generate_inputs((PauliBasis.X, PauliBasis.Z)),
 )
-def test_compile_s_gate_teleportation(in_obs_basis: PauliBasis, k: int) -> None:
+def test_compile_s_gate_teleportation(
+    request: pytest.FixtureRequest, in_obs_basis: PauliBasis, k: int
+) -> None:
     # The Y half cube is only implemented in the fixed bulk convention.
     g = s_gate_teleportation(in_obs_basis)
+    if in_obs_basis == PauliBasis.X:
+        # The X input is read out by a Y half cube joined to an ``XZO`` pipe.
+        request.applymarker(_NEEDS_TQECD_PR74)
 
     generate_circuit_and_assert(
         g,
