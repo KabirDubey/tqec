@@ -539,7 +539,7 @@ def get_y_half_cube_block(
         pad_repetitions: number of degenerate-patch PAD rounds. Unlike the generic HOLD/idle, the
             PAD is *specific to the Y half cube* -- it is the timelike-error suppression of the
             transition. Defaults to ``d // 2 = k`` (``LinearFunction(1, 0)``), the minimum for full
-            distance (``ceil(d/2)`` effective rounds counting FINAL) and hence the best LER for a
+            distance (``ceil(d/2)`` effective rounds including FINAL) and hence the best LER for a
             standalone Y memory. Compilation overrides it with the shared ``block_temporal_height``
             so the half cube's temporal footprint matches neighbouring cubes it may be merged with
             in parallel (see ``FixedBulkCubeBuilder``); this is the same controllable temporal
