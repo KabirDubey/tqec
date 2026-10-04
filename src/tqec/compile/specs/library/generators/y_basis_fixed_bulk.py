@@ -544,12 +544,17 @@ def get_y_half_cube_block(
             standalone Y memory. Compilation overrides it with the shared ``block_temporal_height``
             so the half cube's temporal footprint matches neighbouring cubes it may be merged with
             in parallel (see ``FixedBulkCubeBuilder``); this is the same controllable temporal
-            height used for ordinary cubes' memory rounds.
+            height used for ordinary cubes' memory rounds. A constant value must be at least 1.
+
+    Raises:
+        ValueError: if ``pad_repetitions`` is a constant smaller than 1.
 
     """
     top: Basis = "X" if y_spec.horizontal_boundary_basis == TQECBasis.X else "Z"
     # PAD default = distance // 2 = k rounds (ceil(d/2) effective, counting the FINAL round).
     padding = pad_repetitions if pad_repetitions is not None else LinearFunction(1, 0)
+    if padding.slope == 0 and padding.offset < 1:
+        raise ValueError(f"The Y half cube needs at least one PAD round, got {padding}.")
     # The transition (SWITCH) round is the *connected* temporal border of the half cube; it must
     # sit directly on top of the neighbouring cube's held state. The neighbour's final layer is
     # stripped and its state fed straight into SWITCH by the temporal-pipe composition (see
