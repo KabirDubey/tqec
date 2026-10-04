@@ -853,18 +853,17 @@ def test_compile_y_basis_memory(request: pytest.FixtureRequest, pipe_kind: str, 
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    ("k", "convention", "in_obs_basis"),
-    generate_inputs(CONVENTIONS, (PauliBasis.X, PauliBasis.Z)),
+    ("k", "in_obs_basis"),
+    generate_inputs((PauliBasis.X, PauliBasis.Z)),
 )
-def test_compile_s_gate_teleportation(
-    convention: Convention, in_obs_basis: PauliBasis, k: int
-) -> None:
+def test_compile_s_gate_teleportation(in_obs_basis: PauliBasis, k: int) -> None:
+    # The Y half cube is only implemented in the fixed bulk convention.
     g = s_gate_teleportation(in_obs_basis)
 
     generate_circuit_and_assert(
         g,
         k,
-        convention,
+        FIXED_BULK_CONVENTION,
         expected_distance=2 * k + 1,
         expected_num_observables=1,
     )
