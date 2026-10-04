@@ -33,6 +33,7 @@ from tqec.compile.blocks.layers.atomic.base import BaseLayer
 from tqec.compile.blocks.layers.atomic.plaquettes import PlaquetteLayer
 from tqec.compile.blocks.layers.composed.base import BaseComposedLayer
 from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
+from tqec.compile.blocks.layers.composed.sequenced import SequencedLayers
 from tqec.compile.specs.base import YHalfCubeSpec
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquette, Plaquettes
@@ -568,9 +569,19 @@ def get_y_half_cube_block(
         ]
     else:
         # the transition at the connected Z- border, then padding and data readout (open Z+).
+        # The first PAD round follows SWITCH, so its detectors differ from later PAD rounds,
+        # which only follow other PAD rounds. A ``REPEAT`` body carries the detectors of its first
+        # iteration, so the first PAD round is emitted outside of the repetition. Wrapping it in
+        # the same middle layer keeps the temporal schedule of an ordinary cube, which is needed to
+        # merge the half cube with cubes in parallel.
         layers = [
             _round_layer(top, "switch", False),
-            RepeatedLayer(_round_layer(top, "pad", False), repetitions=padding),
+            SequencedLayers(
+                [
+                    _round_layer(top, "pad", False),
+                    RepeatedLayer(_round_layer(top, "pad", False), repetitions=padding - 1),
+                ]
+            ),
             _round_layer(top, "final", False),
         ]
     return LayeredBlock(layers)
