@@ -4,6 +4,7 @@ import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 
 from tqec.computation.block_graph import BlockGraph
 from tqec.gallery.gadgets.mechanisms import CONVENTIONS, MECHANISMS, STATUSES
@@ -76,6 +77,7 @@ class GadgetSpec:
         unknown = self.mechanisms - MECHANISMS
         if unknown:
             raise TQECError(f"Gadget {self.id!r} has unknown mechanism tags {sorted(unknown)}.")
+        object.__setattr__(self, "expected", MappingProxyType(dict(self.expected)))
         if set(self.expected) != set(CONVENTIONS):
             raise TQECError(f"Gadget {self.id!r} must state `expected` for {CONVENTIONS}.")
         bad_status = set(self.expected.values()) - STATUSES
@@ -144,7 +146,8 @@ def iter_gadgets(
         ids: Keep the specs with these ids.
 
     Raises:
-        ValueError: If ``status`` is given without ``convention``, or a filter value is unknown.
+        ValueError: If ``status`` is given without ``convention``, or a filter value is unknown
+            (convention, status, tag, id or family).
 
     """
     if status is not None and convention is None:
@@ -158,6 +161,10 @@ def iter_gadgets(
     if unknown:
         raise ValueError(f"Unknown mechanism tags {sorted(unknown)}.")
     wanted_ids = frozenset(ids) if ids is not None else None
+    if wanted_ids is not None and wanted_ids - _REGISTRY.keys():
+        raise ValueError(f"Unknown gadget ids {sorted(wanted_ids - _REGISTRY.keys())}.")
+    if family is not None and family not in {s.family for s in _REGISTRY.values()}:
+        raise ValueError(f"Unknown gadget family {family!r}.")
     result = []
     for spec in sorted(_REGISTRY.values(), key=lambda s: s.id):
         if family is not None and spec.family != family:
