@@ -32,3 +32,4 @@ User Guide
    Collada <collada_interop>
    Detailed plotting <detailed_plots>
    tqec CLI <cli_examples>
+   Test gadgets <gadgets>
