@@ -63,6 +63,7 @@ def keep_observable(circuit: stim.Circuit, index: int) -> stim.Circuit:
     """Copy of ``circuit`` whose only observable is ``index`` (renumbered to 0)."""
     kept = stim.Circuit()
     for inst in circuit.flattened():
+        assert isinstance(inst, stim.CircuitInstruction)
         if inst.name == "OBSERVABLE_INCLUDE":
             if inst.gate_args_copy() == [index]:
                 kept.append("OBSERVABLE_INCLUDE", inst.targets_copy(), 0)
