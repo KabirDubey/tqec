@@ -59,7 +59,8 @@ graph.view_as_html(
 #
 # You can download the circuit for a ``d=3`` S gate from
 # :download:`here <../media/gallery/s_gate/circuit.stim>`, or generate it with
-# the code below, which also builds a link that opens the same circuit in Crumble.
+# the code below, which also builds a link that opens the same circuit, without noise, in
+# Crumble.
 
 from IPython.display import HTML
 
