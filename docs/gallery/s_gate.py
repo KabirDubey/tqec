@@ -2,7 +2,7 @@ r"""Logical S Gate
 ==============
 
 This example demonstrates a logical S gate by gate teleportation, with an
-inplace Y basis measurement [<cite data-footcite-t="Gidney_inplace_access_2024"></cite>].
+inplace Y basis measurement, as in :footcite:t:`Gidney_inplace_access_2024`.
 
 Construction
 ------------
