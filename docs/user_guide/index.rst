@@ -33,3 +33,4 @@ User Guide
    Batch processing <batch_processing>
    Detailed plotting <detailed_plots>
    tqec CLI <cli_examples>
+   Test gadgets <gadgets>
