@@ -29,3 +29,19 @@ Commands, from the repository root:
 
 Options: `--ks`, `--ps`, `--shots`, `--workers`, `--out DIR` (keep the run directory with `manifest.json`,
 `results.json` and the `.stim` circuits).
+
+## Registry to batch
+
+`examples/y_demo/registry_demo.py` shows the gadget registry feeding the batch interface: pick gadgets with
+`tqec.gallery.gadgets.iter_gadgets(...)` (here every `y_half_cube` gadget, plus the `memory` and `junction` gadgets
+with chosen tags), write them out with `vend(...)`, run `prepare_batch` and `simulate_batch` in the fixed bulk
+convention, and print per unit: the status the registry expects, the status the batch observed, the circuit-level
+distance against `2k+1` and the sinter error count. A row marked `<- differs` is a gadget whose registry
+expectation no longer matches (the registry on `main` lists the Y gadgets as `compile_failed`; with the Y branches
+merged they compile).
+
+    .venv/bin/python examples/y_demo/registry_demo.py --ks 1 --shots 200      # small check
+    .venv/bin/python examples/y_demo/registry_demo.py                          # k=1,2, p=1e-3, 500 shots
+
+Options: `--ks`, `--p`, `--shots`, `--workers`, `--out DIR`. The setup is the one above (tqecd with the Y fragment
+flow, fresh detector database).
