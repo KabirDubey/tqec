@@ -8,6 +8,7 @@ from tqec.computation.block_graph import BlockGraph
 from tqec.gallery.gadgets import (
     CONVENTIONS,
     MECHANISMS,
+    PENDING,
     STATUSES,
     GadgetSpec,
     Witness,
@@ -51,7 +52,7 @@ def test_vocabularies() -> None:
 def test_every_mechanism_tag_has_a_spec() -> None:
     covered = set().union(*(spec.mechanisms for spec in ALL_SPECS))
     assert covered <= MECHANISMS
-    assert MECHANISMS - covered == set()
+    assert MECHANISMS - covered == set(PENDING)
 
 
 @pytest.mark.parametrize(
@@ -152,3 +153,34 @@ def test_cli_export(tmp_path: Path) -> None:
     assert "pair_time_zxz.bgraph" in files
     graph = BlockGraph.from_bgraph(tmp_path / "pair_time_zxz.bgraph")
     assert len(graph.cubes) == 2
+
+
+def test_pending_tags_are_valid_and_point_to_issues() -> None:
+    assert PENDING
+    assert set(PENDING) <= MECHANISMS
+    assert all(url.startswith("https://github.com/tqec/tqec/issues/") for url in PENDING.values())
+    assert any(tag.startswith("space:patch_rotation:") for tag in PENDING)
+
+
+def test_spec_can_use_a_pending_tag_without_central_edits() -> None:
+    tag = next(iter(PENDING))
+    assert _spec(mechanisms=frozenset({tag})).mechanisms == {tag}
+
+
+def test_expected_is_immutable_and_not_shared() -> None:
+    spec = ALL_SPECS[0]
+    with pytest.raises(TypeError):
+        mutable: Any = spec.expected
+        mutable["fixed_bulk"] = "ready"
+    shared = {"fixed_bulk": "ready"}
+    first, second = _spec(expected=shared), _spec(expected=shared)
+    shared["fixed_bulk"] = "compile_failed"
+    assert first.expected["fixed_bulk"] == "ready"
+    assert first.expected is not second.expected
+
+
+def test_iter_gadgets_rejects_unknown_ids_and_family() -> None:
+    with pytest.raises(ValueError, match="Unknown gadget ids"):
+        iter_gadgets(ids=["memory_zxz", "nope"])
+    with pytest.raises(ValueError, match="Unknown gadget family"):
+        iter_gadgets(family="nope")
