@@ -53,3 +53,35 @@ the module in ``tqec/gallery/gadgets/__init__.py``. Tags must come from
 tag has a gadget; the slow test (``pytest -m slow tests/gallery/gadgets_compile_test.py``)
 compiles each gadget at ``k=1`` and compares its status and distance with the spec. It takes
 about a minute, but compiles circuits, so run it on a compute machine.
+
+Worked example: a patch rotation gadget (#1101)
+-----------------------------------------------
+
+The tags for the patch rotation block are predeclared in
+:data:`~tqec.gallery.gadgets.mechanisms.PENDING`, mapped to the blocking issue (#1012). A
+contributor adds only a family module and the drawn files; ``mechanisms.py``, ``spec.py`` and the
+tests stay untouched, because the coverage test allows pending tags that no spec covers yet.
+
+.. code-block:: python
+
+    # src/tqec/gallery/gadgets/patch_rotation.py
+    from pathlib import Path
+
+    from tqec.gallery.gadgets.spec import GadgetSpec, register
+
+    DATA_DIR = Path(__file__).parent / "data" / "patch_rotation"
+
+    register(
+        GadgetSpec(
+            id="patch_rotation_temporal_z",
+            build=lambda: DATA_DIR / "patch_rotation_temporal_z.dae",
+            family="patch_rotation",
+            mechanisms=frozenset({"space:patch_rotation:temporal:z"}),
+            expected={"fixed_bulk": "import_failed"},
+            blocked_by=("https://github.com/tqec/tqec/issues/1012",),
+        )
+    )
+
+Then put the ``.dae`` file in ``data/patch_rotation/`` and import ``patch_rotation`` in
+``tqec/gallery/gadgets/__init__.py``. When #1012 lands and the file imports, change ``expected``
+to the observed status.

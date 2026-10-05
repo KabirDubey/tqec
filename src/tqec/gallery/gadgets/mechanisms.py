@@ -32,13 +32,30 @@ Tags (``{a,b}`` stands for one tag per alternative):
 - ``time:conditional:{zx,y}``: conditional measurement branches
 - ``port:fill``: not a fault path: port filling of an open graph
 
-Mechanisms of blocks tqec cannot compile yet (patch rotation, issue #1012) have no tag here.
-They are added with the gadgets that exercise them.
+- ``space:patch_rotation:{temporal,spatial}:{z,x}``: patch rotation block, temporally or
+  spatially aligned (pending, see :data:`PENDING`)
+
+Tags of blocks tqec cannot compile yet are predeclared and listed in :data:`PENDING` with the
+issue that blocks them, so a family module can use them without editing this file.
 """
 
+from collections.abc import Mapping
 from itertools import product
+from types import MappingProxyType
 
 _BASES = ("x", "z")
+
+
+PENDING: Mapping[str, str] = MappingProxyType(
+    {
+        f"space:patch_rotation:{alignment}:{b}": "https://github.com/tqec/tqec/issues/1012"
+        for alignment, b in product(("temporal", "spatial"), ("z", "x"))
+    }
+)
+"""Tags no registered gadget needs to cover yet, mapped to the issue that blocks them.
+
+The coverage test requires a spec for every tag in :data:`MECHANISMS` except these.
+"""
 
 
 def _expand() -> frozenset[str]:
@@ -70,6 +87,7 @@ def _expand() -> frozenset[str]:
     tags.update(("time:y:junction_arm", "time:y:after_pipes"))
     tags.update(("time:conditional:zx", "time:conditional:y"))
     tags.add("port:fill")
+    tags.update(PENDING)
     return frozenset(tags)
 
 

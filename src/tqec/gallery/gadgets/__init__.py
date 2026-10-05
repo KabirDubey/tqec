@@ -26,6 +26,7 @@ from tqec.gallery.gadgets import (  # noqa: F401
 )
 from tqec.gallery.gadgets.mechanisms import CONVENTIONS as CONVENTIONS
 from tqec.gallery.gadgets.mechanisms import MECHANISMS as MECHANISMS
+from tqec.gallery.gadgets.mechanisms import PENDING as PENDING
 from tqec.gallery.gadgets.mechanisms import STATUSES as STATUSES
 from tqec.gallery.gadgets.spec import GadgetSpec as GadgetSpec
 from tqec.gallery.gadgets.spec import Witness as Witness
