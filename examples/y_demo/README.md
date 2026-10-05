@@ -4,12 +4,20 @@ Shows how `tqec.orchestration` (batch processing) handles Y gadgets in its defau
 input, relative placement kept, each connected component with its own observables.
 
 It builds a Y memory, the S gate (X and Z) and a multi-component graph holding all three placed apart. It prints
-each component's bounding box and observables, checks the fault distance of every circuit against `2k+1`, runs
-a small sinter batch, and shows that two components on the same spacetime cell raise a `TQECError`.
+each component's bounding box and observables, checks the circuit-level fault distance of every circuit against `2k+1` (the minimum graphlike logical distance over
+all observables, and per observable by keeping only that observable), runs a small sinter batch, and shows that
+`BlockGraph` construction rejects overlapping cubes (`TQECError`) before batching.
 
-Setup (branch `kd/y-demo`; it needs tqecd PR #74, which is not in a release yet):
+Setup (branch `kd/y-demo`; it needs tqecd PR #74 with the Y fragment flow, which is not in a release yet), from the
+repository root:
 
-    uv pip install --python .venv/bin/python -e <path to tqecd checkout of kd/pr74-update>
+    uv sync
+    uv pip install --python .venv/bin/python -e <path to a tqecd checkout of KabirDubey/tqecd feat/yfragmentflow>
+
+To get that checkout:
+
+    git clone -b feat/yfragmentflow https://github.com/KabirDubey/tqecd.git <path>
+    # or, in an existing clone: git fetch origin feat/yfragmentflow && git checkout feat/yfragmentflow
 
 (or `export PYTHONPATH=<tqecd checkout>/src`). The script uses a fresh detector database, since a database made
 by tqecd 0.2.1 hides the fix.

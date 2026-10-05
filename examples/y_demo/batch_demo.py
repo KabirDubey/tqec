@@ -2,9 +2,10 @@
 
 Builds four block graphs (Y memory, S gate X, S gate Z and a multi-component graph holding all
 three, placed apart), runs them through ``tqec.orchestration`` in its default mode (one circuit
-per input, relative placement kept), prints what the manifest recorded, confirms the fault
-distance of every circuit and samples logical error rates with sinter. Finally it shows that two
-components placed on the same spacetime cell are rejected.
+per input, relative placement kept), prints what the manifest recorded, confirms the
+circuit-level fault distance (minimum graphlike logical distance over all observables, and per
+observable) and samples logical error rates with sinter. Finally it shows that BlockGraph
+construction rejects overlapping cubes before batching.
 
 Run: ``python examples/y_demo/batch_demo.py --ks 1 --shots 500`` (see README.md).
 """
@@ -58,8 +59,20 @@ def multi_component_graph() -> BlockGraph:
     return g
 
 
+def keep_observable(circuit: stim.Circuit, index: int) -> stim.Circuit:
+    """Copy of ``circuit`` whose only observable is ``index`` (renumbered to 0)."""
+    kept = stim.Circuit()
+    for inst in circuit.flattened():
+        if inst.name == "OBSERVABLE_INCLUDE":
+            if inst.gate_args_copy() == [index]:
+                kept.append("OBSERVABLE_INCLUDE", inst.targets_copy(), 0)
+        else:
+            kept.append(inst)
+    return kept
+
+
 def fault_distance(circuit: stim.Circuit, p: float = 1e-3) -> int:
-    """Length of the shortest graphlike logical error, counting every error mechanism."""
+    """Circuit-level minimum graphlike logical distance over all observables of ``circuit``."""
     noisy = NoiseModel.uniform_depolarizing(p).noisy_circuit(circuit)
     error = noisy.shortest_graphlike_error(
         ignore_ungraphlike_errors=False, canonicalize_circuit_errors=True
@@ -96,7 +109,9 @@ def main() -> None:
         s_gate_teleportation(PauliBasis.Z),
         multi_component_graph(),
     ]
-    for graph, name in zip(graphs, ["y_memory", "s_gate_x", "s_gate_z", "multi"]):
+    names = ["y_memory", "s_gate_x", "s_gate_z", "multi"]
+    assert len(graphs) == len(names)
+    for graph, name in zip(graphs, names):
         graph.name = name
     # Default BatchConfig.split_components=False: one circuit per input, placement kept.
     config = BatchConfig(ks=ks, ps=ps, max_shots=args.shots, max_errors=None)
@@ -108,18 +123,28 @@ def main() -> None:
         print(f"  device frame (lattice, inclusive): {unit.device_frame}")
         for comp in unit.components:
             print(f"  component {comp['component_id']}: {comp['minimum']} .. {comp['maximum']}")
+        assert len(unit.observable_components) == len(unit.logical_observables)
         for i, (cid, lo) in enumerate(zip(unit.observable_components, unit.logical_observables)):
             print(
                 f"  observable {i}: component {cid}, external stabilizer {lo.external_stabilizer}"
             )
 
-    print("\n== Fault distance (shortest graphlike error at p=1e-3, expected 2k+1)")
+    print(
+        "\n== Circuit-level fault distance (minimum graphlike logical distance over all "
+        "observables, at p=1e-3; expected 2k+1; per observable = only that observable kept)"
+    )
     for unit in manifest.units:
         for k, rel in sorted(unit.circuits.items()):
             circuit = stim.Circuit.from_file(run_dir / rel)
             d = fault_distance(circuit)
             verdict = "OK" if d == 2 * k + 1 else "MISMATCH"
-            print(f"{unit.gadget_id} k={k}: distance {d} vs {2 * k + 1}  {verdict}")
+            per_obs = [
+                fault_distance(keep_observable(circuit, i)) for i in range(circuit.num_observables)
+            ]
+            print(
+                f"{unit.gadget_id} k={k}: min over observables {d} vs {2 * k + 1}  {verdict}; "
+                f"per observable {per_obs}"
+            )
 
     print("\n== Sinter (uniform depolarizing, pymatching)")
     result = simulate_batch(run_dir, num_workers=args.workers)
@@ -136,13 +161,14 @@ def main() -> None:
         circuit = stim.Circuit.from_file(run_dir / rel)
         for p in ps:
             rates = per_observable_rates(circuit, p, args.shots)
+            assert len(multi.observable_components) == len(rates)
             labelled = ", ".join(
                 f"obs{i}[{cid}]={rate:.4f}"
                 for i, (cid, rate) in enumerate(zip(multi.observable_components, rates))
             )
             print(f"k={k} p={p:g}: {labelled}")
 
-    print("\n== Two components on the same spacetime cell must be rejected")
+    print("\n== BlockGraph construction rejects overlapping cubes before batching")
     clash = BlockGraph("clash")
     place(clash, memory(PauliBasis.Y), 0, 0, 0)
     try:
