@@ -1,8 +1,8 @@
 r"""Logical S Gate
 ==============
 
-This example demonstrates a logical S gate by gate teleportation, with an
-inplace Y basis measurement, as in :footcite:t:`Gidney_inplace_access_2024`.
+This example demonstrates a logical S gate by gate teleportation. The Y basis
+measurement is done inplace, as in :footcite:t:`Gidney_inplace_access_2024`.
 
 Construction
 ------------
@@ -11,11 +11,16 @@ The S gate is teleported in two steps:
 
 - an :math:`M_{ZZ}` measurement between the target qubit and an ancilla qubit
   initialized in the :math:`|+\rangle` state,
-- a Y basis measurement of the ancilla qubit, done by a Y half cube.
+- a Y basis measurement of the ancilla qubit, done by a Y half cube (see
+  :doc:`/user_guide/terminology`).
 
-``tqec`` provides the builtin function ``tqec.gallery.s_gate_teleportation`` to
-construct it. The ``In`` port is at the bottom of the block graph and the ``Out``
-port is at the top.
+The target qubit carries the output, and the ancilla is consumed by the Y
+measurement. ``tqec`` provides the builtin function ``tqec.gallery.s_gate_teleportation``
+to construct it. The ``In`` port is at the bottom of the block graph and the ``Out``
+port is at the top. With a basis argument, as here, the ports are closed, so each flow
+is checked by a deterministic observable rather than teleporting an arbitrary state.
+The short green block is the Y half cube. The ``X`` graph has two: the ancilla's
+and the ``Out`` port.
 """
 
 # ruff: noqa: E402
@@ -30,9 +35,15 @@ graph.view_as_html()
 
 # %%
 # Up to signs, the S gate maps :math:`X` to :math:`Y` and :math:`Z` to :math:`Z`.
-# The correlation surface below shows the :math:`X` operator at the input, at the
-# bottom, mapped to the :math:`Y` operator at the output, at the top, where the Y
-# half cube measures it.
+# In this graph ``In`` is initialized in the :math:`X` basis and ``Out`` is closed
+# with a Y half cube, which measures the output in the :math:`Y` basis. The
+# correlation surface below shows :math:`X` at the input, at the bottom, and
+# :math:`Y` at the output, at the top. It also reaches the ancilla's Y half cube,
+# so that measurement outcome enters the observable.
+#
+# On the 3D view, the :math:`Y` part of a correlation surface is drawn as
+# overlapping :math:`X` (red) and :math:`Z` (blue) surfaces. The inset in the plots
+# below draws :math:`Y` in green.
 
 correlation_surfaces = graph.find_correlation_surfaces()
 # %%
@@ -48,7 +59,7 @@ graph.view_as_html(
 #
 # You can download the circuit for a ``d=3`` S gate from
 # :download:`here <../media/gallery/s_gate/circuit.stim>`, or generate it with
-# the code below. The link it prints opens the ``d=5`` (``k=2``) circuit in Crumble.
+# the code below, which also builds a link that opens the same circuit in Crumble.
 
 from IPython.display import HTML
 
@@ -58,7 +69,7 @@ compiled_graph = compile_block_graph(graph)
 circuit = compiled_graph.generate_stim_circuit(
     k=1, noise_model=NoiseModel.uniform_depolarizing(p=0.001)
 )
-HTML(f'<a href="{compiled_graph.generate_crumble_url(k=2)}">Open the d=5 circuit in Crumble</a>')
+HTML(f'<a href="{compiled_graph.generate_crumble_url(k=1)}">Open the d=3 circuit in Crumble</a>')
 
 # %%
 # Simulation
@@ -80,7 +91,7 @@ from tqec.simulation.plotting.inset import plot_observable_as_inset
 from tqec.simulation.simulation import start_simulation_using_sinter
 
 
-def generate_graphs(in_observable_basis: PauliBasis) -> None:
+def generate_graphs(in_observable_basis: PauliBasis, flow: str) -> None:
     """Generate the logical error-rate graphs corresponding to the provided basis."""
     block_graph = s_gate_teleportation(in_observable_basis)
     zx_graph = block_graph.to_zx_graph()
@@ -120,22 +131,32 @@ def generate_graphs(in_observable_basis: PauliBasis) -> None:
         ax.grid(axis="both")
         ax.legend()
         ax.loglog()
-        ax.set_title("Logical S Gate Error Rate")
+        ax.set_title(f"S gate: {flow}")
         ax.set_xlabel("Physical Error Rate")
-        ax.set_ylabel("Logical Error Rate")
+        ax.set_ylabel("Logical Error Rate (per round)")
 
 
 # %%
 # :math:`X \rightarrow Y`
 # ~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The observable is ``XYY``: :math:`X` on ``In``, :math:`Y` on the ancilla and
+# :math:`Y` on ``Out``.
 
-generate_graphs(PauliBasis.X)
+generate_graphs(PauliBasis.X, "X -> Y (XYY)")
 
 # %%
 # :math:`Z \rightarrow Z`
 # ~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The observable is ``ZIZ``: the ancilla is not involved.
 
-generate_graphs(PauliBasis.Z)
+generate_graphs(PauliBasis.Z, "Z -> Z (ZIZ)")
+
+# %%
+# .. note::
+#     See :ref:`reading_error_plots` for help reading logical error-rate plots
+#     like the ones above.
 
 # %%
 # References
