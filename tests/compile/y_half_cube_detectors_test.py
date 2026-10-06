@@ -64,10 +64,12 @@ def _tqecd_finds_minimal_commuting_covers() -> bool:
     example below it returns three stabilizers, ``[0, 1, 2]``, where ``Z0*Z1*Z2 * Z0*X1*Z2 = Y1``
     already commutes with ``Y0*Y1*Y2``. tqecd PR #74 (https://github.com/tqec/tqecd/pull/74)
     returns the minimal cover ``[2, 3]``. The surplus stabilizers of a non-minimal cover are
-    flows that other detectors need, so with tqecd 0.2.1 a Y half cube whose top boundary is
-    ``Z`` (joined by an ``XZO`` pipe) misses detectors in its SWITCH round and has distance 1.
-    The ``X``-top half cube (``ZXO`` pipe) keeps full distance only because its sources happen
-    to come in an order whose first dependency is minimal.
+    flows that other detectors need, so with tqecd 0.2.1 some Y half cubes miss detectors in
+    their SWITCH round and the gadget has distance 1 at every ``k``: the Y memory joined by an
+    ``XZO`` pipe (``Z`` top boundary) is the simplest case. Which gadgets are hit depends on
+    the order in which tqecd meets the flows; the Y memory joined by a ``ZXO`` pipe (``X`` top)
+    keeps full distance only because its sources come in an order whose first dependency is
+    minimal.
     """
 
     def pauli(text: str) -> PauliString:
@@ -92,15 +94,19 @@ GRAPHS = {
     "s_gate_z": lambda: _s_gate(PauliBasis.Z),
     "y_above_two_cubes": _y_above_two_cubes,
 }
-# Gadgets where a Y half cube has a ``Z`` top boundary (joined by an ``XZO`` pipe). Their full
-# distance needs the minimal commuting cover of tqecd PR #74; see
-# ``_tqecd_finds_minimal_commuting_covers``.
-Z_TOP = {"y_memory_ztop", "s_gate_x", "y_above_two_cubes"}
+# Gadgets whose full distance needs the minimal commuting cover of tqecd PR #74; see
+# ``_tqecd_finds_minimal_commuting_covers``. All three join a Y half cube to an ``XZO`` pipe;
+# ``s_gate_z`` does too but keeps full distance with tqecd 0.2.1.
+LOSES_DISTANCE_WITHOUT_MINIMAL_COVER = {"y_memory_ztop", "s_gate_x", "y_above_two_cubes"}
 
 
 def _graph_params(names: list[str]) -> list:
     return [
-        pytest.param(name, marks=[NEEDS_MINIMAL_COVER] if name in Z_TOP else []) for name in names
+        pytest.param(
+            name,
+            marks=[NEEDS_MINIMAL_COVER] if name in LOSES_DISTANCE_WITHOUT_MINIMAL_COVER else [],
+        )
+        for name in names
     ]
 
 
