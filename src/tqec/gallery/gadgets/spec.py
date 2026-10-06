@@ -15,32 +15,6 @@ _DISTANCE_RE = re.compile(r"(?P<mul>\d+)\*k(?P<add>[+-]\d+)?")
 
 
 @dataclass(frozen=True)
-class Witness:
-    """Where the minimum-weight logical error of one mechanism is expected to run.
-
-    No spec carries a witness yet and no test checks them (UNVERIFIED: mapping error
-    coordinates back to cubes has not been built). The intended check: the error returned by
-    ``shortest_graphlike_error`` must touch at least one of ``blocks``.
-    This is necessary evidence only. The returned path is one of possibly many ties, so a
-    pass shows that the path lies in a block carrying the tag, not that the mechanism is the
-    unique minimum.
-
-    Attributes:
-        mechanism: A tag of the owning spec's ``mechanisms``.
-        observable: Index of the observable, in the order of
-            :py:meth:`~tqec.computation.block_graph.BlockGraph.find_correlation_surfaces`.
-        blocks: Positions ``(x, y, z)`` of the cubes that carry the tag (a pipe is named by
-            both of its end cubes). Empty when every block of the gadget carries it; the check
-            is then vacuous and the mechanism rests on the distance check alone.
-
-    """
-
-    mechanism: str
-    observable: int = 0
-    blocks: tuple[tuple[int, int, int], ...] = ()
-
-
-@dataclass(frozen=True)
 class GadgetSpec:
     """A named block graph with the facts needed to benchmark and test it.
 
@@ -55,7 +29,6 @@ class GadgetSpec:
         blocked_by: Issues, pull requests or branches that must land before ``expected`` changes.
         expected_distance: Expected ``shortest_graphlike_error`` length as a formula in ``k``
             (``"2*k+1"``), measured over all observables of the graph jointly.
-        witnesses: Expected location of the minimum-weight path per covered mechanism.
         notes: Free text for gaps and caveats.
 
     """
@@ -67,7 +40,6 @@ class GadgetSpec:
     expected: Mapping[str, str]
     blocked_by: tuple[str, ...] = ()
     expected_distance: str = "2*k+1"
-    witnesses: tuple[Witness, ...] = ()
     notes: str = ""
 
     def __post_init__(self) -> None:
@@ -85,11 +57,6 @@ class GadgetSpec:
             raise TQECError(f"Gadget {self.id!r} has unknown statuses {sorted(bad_status)}.")
         if _DISTANCE_RE.fullmatch(self.expected_distance) is None:
             raise TQECError(f"Gadget {self.id!r}: bad distance formula {self.expected_distance!r}.")
-        for witness in self.witnesses:
-            if witness.mechanism not in self.mechanisms:
-                raise TQECError(
-                    f"Gadget {self.id!r}: witness mechanism {witness.mechanism!r} is not a tag."
-                )
 
     def distance(self, k: int) -> int:
         """Return the expected ``shortest_graphlike_error`` length at scale ``k``."""

@@ -29,7 +29,6 @@ from tqec.gallery.gadgets.mechanisms import MECHANISMS as MECHANISMS
 from tqec.gallery.gadgets.mechanisms import PENDING as PENDING
 from tqec.gallery.gadgets.mechanisms import STATUSES as STATUSES
 from tqec.gallery.gadgets.spec import GadgetSpec as GadgetSpec
-from tqec.gallery.gadgets.spec import Witness as Witness
 from tqec.gallery.gadgets.spec import build_graph as build_graph
 from tqec.gallery.gadgets.spec import get as get
 from tqec.gallery.gadgets.spec import iter_gadgets as iter_gadgets

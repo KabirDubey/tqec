@@ -11,7 +11,6 @@ from tqec.gallery.gadgets import (
     PENDING,
     STATUSES,
     GadgetSpec,
-    Witness,
     build_graph,
     get,
     iter_gadgets,
@@ -69,11 +68,6 @@ def test_every_mechanism_tag_has_a_spec() -> None:
 def test_invalid_specs_are_rejected(bad: dict[str, object]) -> None:
     with pytest.raises(TQECError):
         _spec(**bad)
-
-
-def test_witness_mechanism_must_be_a_tag() -> None:
-    with pytest.raises(TQECError):
-        _spec(witnesses=(Witness("time:memory:x"),))
 
 
 def test_duplicate_registration_is_rejected() -> None:
