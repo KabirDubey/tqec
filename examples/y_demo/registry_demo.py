@@ -1,6 +1,6 @@
 """Registry to batch: select gadgets from the registry, vend them, run the batch, compare.
 
-The user picks gadgets with ``tqec.gallery.gadgets.iter_gadgets`` (family, tags), ``vend`` turns
+The user picks gadgets with ``tqec.benchmarks.gadgets.iter_gadgets`` (family, tags), ``vend`` turns
 them into ``prepare_batch`` inputs, and ``prepare_batch`` / ``simulate_batch`` run them in the
 fixed bulk convention. For every unit the script prints the status the registry expects, the
 status the batch observed, the circuit-level distance against ``2k+1`` and the sinter errors.
@@ -23,7 +23,7 @@ os.environ.setdefault(
 import stim
 from batch_demo import fault_distance
 
-from tqec.gallery.gadgets import iter_gadgets, vend
+from tqec.benchmarks.gadgets import iter_gadgets, vend
 from tqec.orchestration import BatchConfig, prepare_batch, simulate_batch
 
 CONVENTION = "fixed_bulk"

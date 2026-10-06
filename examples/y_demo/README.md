@@ -33,7 +33,7 @@ Options: `--ks`, `--ps`, `--shots`, `--workers`, `--out DIR` (keep the run direc
 ## Registry to batch
 
 `examples/y_demo/registry_demo.py` shows the gadget registry feeding the batch interface: pick gadgets with
-`tqec.gallery.gadgets.iter_gadgets(...)` (here every `y_half_cube` gadget, plus the `memory` and `junction` gadgets
+`tqec.benchmarks.gadgets.iter_gadgets(...)` (here every `y_half_cube` gadget, plus the `memory` and `junction` gadgets
 with chosen tags), write them out with `vend(...)`, run `prepare_batch` and `simulate_batch` in the fixed bulk
 convention, and print per unit: the status the registry expects, the status the batch observed, the circuit-level
 distance against `2k+1` and the sinter error count. A row marked `<- differs` is a gadget whose registry
