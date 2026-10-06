@@ -84,6 +84,7 @@ def _tqecd_finds_minimal_commuting_covers() -> bool:
 NEEDS_MINIMAL_COVER = pytest.mark.xfail(
     condition=not _tqecd_finds_minimal_commuting_covers(),
     reason="tqecd 0.2.1 merges anticommuting flows with non-minimal covers (fixed in tqecd #74)",
+    raises=AssertionError,
     strict=True,
 )
 
