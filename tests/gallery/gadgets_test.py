@@ -122,7 +122,7 @@ def test_non_ready_specs_state_what_blocks_them() -> None:
 
 def test_y_files_exist_and_g05_is_not_registered() -> None:
     y_specs = iter_gadgets(family="y_half_cube")
-    assert len(y_specs) == 15
+    assert len(y_specs) == 24
     for spec in y_specs:
         assert (DATA_DIR / f"{spec.id}.bgraph").is_file()
     assert "y_half_cube_g05" not in {s.id for s in y_specs}
