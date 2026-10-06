@@ -1,6 +1,6 @@
 """Command line listing and export of the gadget registry.
 
-Run ``python -m tqec.gallery.gadgets --help``.
+Run ``python -m tqec.benchmarks.gadgets --help``.
 """
 
 import argparse
@@ -8,12 +8,12 @@ import json
 import sys
 from pathlib import Path
 
-from tqec.gallery.gadgets import CONVENTIONS, MECHANISMS, build_graph, iter_gadgets
+from tqec.benchmarks.gadgets import CONVENTIONS, MECHANISMS, build_graph, iter_gadgets
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="python -m tqec.gallery.gadgets", description="List or export registered gadgets."
+        prog="python -m tqec.benchmarks.gadgets", description="List or export registered gadgets."
     )
     parser.add_argument("--list", action="store_true", help="print one line per gadget (default)")
     parser.add_argument("--family", help="keep one family")

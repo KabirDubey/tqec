@@ -2,7 +2,7 @@ BLOCKGRAPH 0.1.0;
 
 METADATA: attr_name; value;
 source; TQEC.
-circuit_name; g11_gadget_11;
+circuit_name; g10_gadget_10;
 
 CUBES: index;x;y;z;kind;label;
 (34, 1, 0);34;1;0;ZXX;;

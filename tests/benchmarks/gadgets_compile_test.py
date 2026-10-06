@@ -1,14 +1,14 @@
 """Compile every registered gadget under the fixed bulk convention and check its facts.
 
-Slow: run with ``pytest -m slow tests/gallery/gadgets_compile_test.py``.
+Slow: run with ``pytest -m slow tests/benchmarks/gadgets_compile_test.py``.
 """
 
 import pytest
 
+from tqec.benchmarks.gadgets import GadgetSpec, build_graph, iter_gadgets
 from tqec.compile.compile import compile_block_graph
 from tqec.compile.convention import FIXED_BULK_CONVENTION
 from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets import GadgetSpec, build_graph, iter_gadgets
 from tqec.utils.noise_model import NoiseModel
 
 K = 1

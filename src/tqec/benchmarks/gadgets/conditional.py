@@ -2,10 +2,10 @@
 
 from functools import partial
 
+from tqec.benchmarks.gadgets._common import build, pos
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.correlation import CorrelationSurface, ZXEdge, ZXNode
-from tqec.gallery.gadgets._common import build, pos
-from tqec.gallery.gadgets.spec import GadgetSpec, register
 from tqec.utils.enums import Basis
 
 # ``find_correlation_surfaces`` raises NotImplementedError for a conditional cube

@@ -2,9 +2,9 @@
 
 from functools import partial
 
+from tqec.benchmarks.gadgets._common import COMPILE_FAILED, READY, build, pos
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets._common import COMPILE_FAILED, READY, build, pos
-from tqec.gallery.gadgets.spec import GadgetSpec, register
 from tqec.utils.position import Direction3D
 
 # The Hadamard pipe is inferred from the face-basis mismatch of its two cubes

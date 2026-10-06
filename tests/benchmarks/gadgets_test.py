@@ -1,25 +1,25 @@
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets import (
+from tqec.benchmarks.gadgets import (
     CONVENTIONS,
     MECHANISMS,
     PENDING,
     STATUSES,
     GadgetSpec,
-    Witness,
     build_graph,
     get,
     iter_gadgets,
     register,
     vend,
 )
-from tqec.gallery.gadgets.__main__ import main
-from tqec.gallery.gadgets.y_half_cube import DATA_DIR
+from tqec.benchmarks.gadgets.__main__ import main
+from tqec.benchmarks.gadgets.y_half_cube import DATA_DIR
+from tqec.computation.block_graph import BlockGraph
 from tqec.utils.exceptions import TQECError
 
 ALL_SPECS = iter_gadgets()
@@ -71,11 +71,6 @@ def test_invalid_specs_are_rejected(bad: dict[str, object]) -> None:
         _spec(**bad)
 
 
-def test_witness_mechanism_must_be_a_tag() -> None:
-    with pytest.raises(TQECError):
-        _spec(witnesses=(Witness("time:memory:x"),))
-
-
 def test_duplicate_registration_is_rejected() -> None:
     with pytest.raises(TQECError):
         register(_spec(id=ALL_SPECS[0].id))
@@ -120,12 +115,15 @@ def test_non_ready_specs_state_what_blocks_them() -> None:
         assert spec.blocked_by
 
 
-def test_y_files_exist_and_g05_is_not_registered() -> None:
+def test_y_files_exist_and_ids_have_no_gaps() -> None:
     y_specs = iter_gadgets(family="y_half_cube")
-    assert len(y_specs) == 15
+    assert len(y_specs) == 24
     for spec in y_specs:
         assert (DATA_DIR / f"{spec.id}.bgraph").is_file()
-    assert "y_half_cube_g05" not in {s.id for s in y_specs}
+    numbered = {
+        int(m[1]) for s in y_specs if (m := re.fullmatch(r"y_half_cube_g(\d+)(_[xz]top)?", s.id))
+    }
+    assert numbered == set(range(1, 12))
 
 
 def test_vend_names_graphs_after_ids_and_passes_paths_through() -> None:

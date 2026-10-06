@@ -1,7 +1,7 @@
 """Closed vocabularies of the gadget registry: error-mechanism tags and unit statuses.
 
 A *mechanism* is a minimum-weight fault path through one kind of block configuration. Every
-:class:`~tqec.gallery.gadgets.spec.GadgetSpec` names the mechanisms it is meant to cover with
+:class:`~tqec.benchmarks.gadgets.spec.GadgetSpec` names the mechanisms it is meant to cover with
 tags from :data:`MECHANISMS`. A tag outside the set is rejected when the spec is built, so
 the vocabulary cannot drift silently.
 
@@ -18,6 +18,7 @@ Tags (``{a,b}`` stands for one tag per alternative):
 - ``space:corner:spacetime:{z,x}``: space pipe followed by a time pipe
 - ``space:rotation:move:{z,x}``: boundary rotation by movement
 - ``space:merge_split:{zx,xz}``: lattice-surgery merge and split
+- ``space:y:top:{x,z}``: Y cubes on a temporal pipe with X or Z along y (patch orientation)
 - ``space:y:twist``: chain through the Y half cube diagonal wall
 - ``time:memory:{x,z}``: timelike chain through a regular memory cube
 - ``time:stability:{z,x}``: measurement chain through a stability patch
@@ -75,6 +76,7 @@ def _expand() -> frozenset[str]:
     tags.update(f"space:rotation:move:{b}" for b in ("z", "x"))
     tags.update(f"space:merge_split:{k}" for k in ("zx", "xz"))
     tags.add("space:y:twist")
+    tags.update(f"space:y:top:{b}" for b in ("x", "z"))
     tags.update(f"time:memory:{b}" for b in _BASES)
     tags.update(f"time:stability:{b}" for b in ("z", "x"))
     tags.update(f"time:pipe:{b}" for b in ("z", "x"))
