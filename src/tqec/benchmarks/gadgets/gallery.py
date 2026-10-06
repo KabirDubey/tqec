@@ -3,11 +3,11 @@
 from collections.abc import Callable
 from functools import partial
 
+from tqec.benchmarks.gadgets._common import COMPILE_FAILED, READY
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 from tqec.computation.block_graph import BlockGraph
 from tqec.gallery.cnot import cnot
 from tqec.gallery.cz import cz
-from tqec.gallery.gadgets._common import COMPILE_FAILED, READY
-from tqec.gallery.gadgets.spec import GadgetSpec, register
 from tqec.gallery.move_rotation import move_rotation
 from tqec.gallery.steane_encoding import steane_encoding
 from tqec.gallery.three_cnots import three_cnots

@@ -2,10 +2,10 @@
 
 from functools import partial
 
+from tqec.benchmarks.gadgets._common import READY, build, pos
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.pipe import PipeKind
-from tqec.gallery.gadgets._common import READY, build, pos
-from tqec.gallery.gadgets.spec import GadgetSpec, register
 from tqec.utils.position import Position3D
 
 # Cube kind and spatial pipe kind of the compile tests (``compile_test.py:215-283``); the pipe

@@ -23,7 +23,7 @@ into the :mod:`tqec` namespace and can be accessed at the top level.
    computation
    compile
    gallery
-   gallery.gadgets
+   benchmarks.gadgets
    interop
    simulation
    utils

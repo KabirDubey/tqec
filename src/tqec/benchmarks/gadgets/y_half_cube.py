@@ -15,8 +15,8 @@ was dropped and the later gadgets were re-indexed: the old ``g06`` to ``g12`` ar
 
 from pathlib import Path
 
-from tqec.gallery.gadgets._common import COMPILE_FAILED
-from tqec.gallery.gadgets.spec import GadgetSpec, register
+from tqec.benchmarks.gadgets._common import COMPILE_FAILED
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 
 DATA_DIR = Path(__file__).resolve().parent / "data" / "y_half_cube"
 """Directory of the ``.bgraph`` files."""

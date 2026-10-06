@@ -2,9 +2,9 @@
 
 from functools import partial
 
+from tqec.benchmarks.gadgets._common import READY, build, pos
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets._common import READY, build, pos
-from tqec.gallery.gadgets.spec import GadgetSpec, register
 
 
 def _single_cube(name: str, kind: str) -> BlockGraph:

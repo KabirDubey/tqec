@@ -9,9 +9,9 @@ joined along ``x``) and ``ii`` (the ``工`` shape).
 
 from functools import partial
 
+from tqec.benchmarks.gadgets._common import READY, build, flip_basis, pos
+from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets._common import READY, build, flip_basis, pos
-from tqec.gallery.gadgets.spec import GadgetSpec, register
 from tqec.utils.position import Position3D
 
 _ARMS: dict[str, tuple[tuple[int, int], ...]] = {

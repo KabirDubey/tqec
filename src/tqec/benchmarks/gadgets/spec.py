@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 
+from tqec.benchmarks.gadgets.mechanisms import CONVENTIONS, MECHANISMS, STATUSES
 from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets.mechanisms import CONVENTIONS, MECHANISMS, STATUSES
 from tqec.utils.exceptions import TQECError
 
 _ID_RE = re.compile(r"[a-z0-9_]{1,40}")
@@ -24,7 +24,8 @@ class GadgetSpec:
             :py:class:`~tqec.computation.block_graph.BlockGraph`, or the path of a ``.bgraph`` or
             ``.dae`` file.
         family: Group the gadget belongs to (``memory``, ``y_half_cube``, ...).
-        mechanisms: Tags of :data:`~tqec.gallery.gadgets.mechanisms.MECHANISMS` the gadget covers.
+        mechanisms: Tags of :data:`~tqec.benchmarks.gadgets.mechanisms.MECHANISMS` the gadget
+            covers.
         expected: Status per convention name, with the strings of ``UnitStatus``.
         blocked_by: Issues, pull requests or branches that must land before ``expected`` changes.
         expected_distance: Expected ``shortest_graphlike_error`` length as a formula in ``k``

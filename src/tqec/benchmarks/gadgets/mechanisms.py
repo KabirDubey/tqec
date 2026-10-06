@@ -1,7 +1,7 @@
 """Closed vocabularies of the gadget registry: error-mechanism tags and unit statuses.
 
 A *mechanism* is a minimum-weight fault path through one kind of block configuration. Every
-:class:`~tqec.gallery.gadgets.spec.GadgetSpec` names the mechanisms it is meant to cover with
+:class:`~tqec.benchmarks.gadgets.spec.GadgetSpec` names the mechanisms it is meant to cover with
 tags from :data:`MECHANISMS`. A tag outside the set is rejected when the spec is built, so
 the vocabulary cannot drift silently.
 

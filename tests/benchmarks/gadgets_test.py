@@ -5,8 +5,7 @@ from typing import Any
 
 import pytest
 
-from tqec.computation.block_graph import BlockGraph
-from tqec.gallery.gadgets import (
+from tqec.benchmarks.gadgets import (
     CONVENTIONS,
     MECHANISMS,
     PENDING,
@@ -18,8 +17,9 @@ from tqec.gallery.gadgets import (
     register,
     vend,
 )
-from tqec.gallery.gadgets.__main__ import main
-from tqec.gallery.gadgets.y_half_cube import DATA_DIR
+from tqec.benchmarks.gadgets.__main__ import main
+from tqec.benchmarks.gadgets.y_half_cube import DATA_DIR
+from tqec.computation.block_graph import BlockGraph
 from tqec.utils.exceptions import TQECError
 
 ALL_SPECS = iter_gadgets()
