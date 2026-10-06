@@ -95,10 +95,11 @@ register(
         family="gallery_open",
         mechanisms=frozenset({"port:fill"}),
         expected=COMPILE_FAILED,
+        blocked_by=("https://github.com/tqec/tqec/issues/838",),
         notes=(
-            "Open ports. Observed on brainlab (job Oct0526-032923-gadgets-registry-slow2): "
-            "compile_block_graph fails on a filled graph under the fixed bulk convention; "
-            "the cause was not investigated."
+            "Open ports. Both fillings raise NotImplementedError: the OZXH pipe is an x-direction "
+            "spatial Hadamard on a spatial cube, which the fixed bulk convention does not "
+            "implement yet (_get_left_right_spatial_hadamard_cube_arm_plaquettes)."
         ),
     )
 )
