@@ -6,10 +6,11 @@ Y cubes used one orientation have a twin, the same graph rotated 90 degrees abou
 swapped, first two letters of each kind swapped), with id suffix ``_xtop`` or ``_ztop`` (the new
 orientation). The twins are new files; the originals are untouched.
 
-The files are the evidence set of the Y half cube work (a 48/48 compile and distance run).
-They stay byte-identical; Python builders can replace them later with a test that a builder
-equals its file. ``g05`` of that set holds the same cubes and pipes as ``g04`` (same
-coordinates, different order), so it is registered once, as ``y_half_cube_g04``.
+The files come from the evidence set of the Y half cube work (a 48/48 compile and distance
+run). Python builders can replace them later with a test that a builder equals its file. In that
+set ``g05`` held the same cubes and pipes as ``g04`` (same coordinates, different order), so it
+was dropped and the later gadgets were re-indexed: the old ``g06`` to ``g12`` are now ``g05`` to
+``g11``. Each file differs from the original only in its name and its ``circuit_name`` line.
 """
 
 from pathlib import Path
@@ -27,12 +28,12 @@ _NEEDS_TQECD_74 = frozenset(
         "g01",
         "g02",
         "g04",
-        "g06",
+        "g05",
+        "g07",
         "g08",
         "g09",
-        "g10",
+        "g10_ztop",
         "g11_ztop",
-        "g12_ztop",
         "s_gate_x",
         "s_gate_y",
         "ymem_ztop",
@@ -51,9 +52,9 @@ _TAGS: dict[str, frozenset[str]] = {
     "g02": frozenset({"time:y:meas", "time:y:junction_arm"}),
     "g03": frozenset({"time:y:meas", "time:y:junction_arm"}),
     "g04": frozenset({"time:y:init", "time:y:meas", "time:y:junction_arm"}),
+    "g05": frozenset({"time:y:meas", "time:y:hadamard_pipe:xzoh", "time:y:junction_arm"}),
     "g06": frozenset({"time:y:meas", "time:y:hadamard_pipe:xzoh", "time:y:junction_arm"}),
-    "g07": frozenset({"time:y:meas", "time:y:hadamard_pipe:xzoh", "time:y:junction_arm"}),
-    "g08": frozenset(
+    "g07": frozenset(
         {
             "time:y:meas",
             "time:y:hadamard_pipe:zxoh",
@@ -61,26 +62,26 @@ _TAGS: dict[str, frozenset[str]] = {
             "time:y:junction_arm",
         }
     ),
-    "g09": frozenset({"time:y:meas"}),
-    "g10": frozenset({"time:y:meas", "time:y:above:xzx"}),
-    "g11": frozenset({"time:y:meas", "time:y:above:zxx"}),
-    "g12": frozenset({"time:y:meas"}),
+    "g08": frozenset({"time:y:meas"}),
+    "g09": frozenset({"time:y:meas", "time:y:above:xzx"}),
+    "g10": frozenset({"time:y:meas", "time:y:above:zxx"}),
+    "g11": frozenset({"time:y:meas"}),
     "s_gate_x": frozenset({"time:y:meas", "time:y:after_pipes"}),
     "s_gate_y": frozenset({"time:y:init", "time:y:meas"}),
     "s_gate_z": frozenset({"time:y:meas", "time:y:after_pipes"}),
     "ymem": frozenset({"time:y:init", "time:y:meas"}),
 }
 
-_TOP_X = frozenset({"ymem", "g03", "g11", "g12"})
-_TOP_Z = frozenset({"g09", "g10", "s_gate_x", "s_gate_y", "s_gate_z"})
-_TOP_BOTH = frozenset({"g01", "g02", "g04", "g06", "g07", "g08"})
+_TOP_X = frozenset({"ymem", "g03", "g10", "g11"})
+_TOP_Z = frozenset({"g08", "g09", "s_gate_x", "s_gate_y", "s_gate_z"})
+_TOP_BOTH = frozenset({"g01", "g02", "g04", "g05", "g06", "g07"})
 assert _TOP_X | _TOP_Z | _TOP_BOTH == set(_TAGS)
 
 _TWINS: dict[str, str] = {name: "z" for name in _TOP_X} | {name: "x" for name in _TOP_Z}
 """Gadget name -> orientation of its rotated twin."""
 
 _NOTES = {
-    "g04": "Also the graph of the earlier g05 (same cubes and pipes).",
+    "g04": "Also the graph of the evidence set's g05 (same cubes and pipes).",
     "s_gate_y": (
         "The generator on kd/y-half-cube-gen refuses a Y-input S gate; this file compiled there "
         "with tqecd #74 (UNVERIFIED on main)."
