@@ -227,6 +227,8 @@ class AnnotateDetectorsOnLayerNode(NodeWalker):
         # deterministic parities that are not deterministic in the full circuit. At ``k = 1`` the
         # default radius already covers the patch, but from ``k = 2`` the window must grow with
         # ``k``. ``2 * k`` is the smallest radius found to give valid detectors for k = 2 and 3.
+        # The cut only produces such parities with tqecd 0.2.1: with tqecd PR #74 the default
+        # radius gives deterministic detectors, so this can go once tqec requires a tqecd with #74.
         radius = self._manhattan_radius
         if y_switch_top_by_position(node):
             radius = max(radius, 2 * self._k)

@@ -71,6 +71,12 @@ class CubeSpec:
             pipe at the top or bottom of a spatial cube is executed on the same
             timeslice as this cube. This information is needed for the fixed
             boundary convention.
+        has_bottom_temporal_pipe: a flag indicating if the cube has a temporal pipe
+            connected to the bottom of the cube. This information is needed for
+            generating the plaquettes of spatial pipes.
+        has_top_temporal_pipe: a flag indicating if the cube has a temporal pipe
+            connected to the top of the cube. This information is needed for
+            generating the plaquettes of spatial pipes.
         y_half_cube_spec: If the cube is a Y half cube, this attribute contains
             the specification of the half cube. Otherwise, it is ``None``.
 
@@ -79,6 +85,8 @@ class CubeSpec:
     kind: CubeKind
     spatial_arms: SpatialArms = SpatialArms.NONE
     has_spatial_up_or_down_pipe_in_timeslice: bool = False
+    has_bottom_temporal_pipe: bool = False
+    has_top_temporal_pipe: bool = False
     y_half_cube_spec: YHalfCubeSpec | None = None
 
     def __post_init__(self) -> None:
@@ -114,20 +122,35 @@ class CubeSpec:
         has_spatial_up_or_down_pipe_in_timeslice = (
             cube.position.z in spatial_up_or_down_pipes_slices
         )
+        pos = cube.position
+
+        has_bottom_temporal_pipe = graph.has_pipe_between(pos, pos.shift_by(dz=-1))
+
+        has_top_temporal_pipe = graph.has_pipe_between(pos, pos.shift_by(dz=1))
         if cube.is_y_cube:
             y_spec = YHalfCubeSpec.from_cube(cube, graph)
             return CubeSpec(
                 cube.kind,
                 has_spatial_up_or_down_pipe_in_timeslice=has_spatial_up_or_down_pipe_in_timeslice,
+                has_bottom_temporal_pipe=has_bottom_temporal_pipe,
+                has_top_temporal_pipe=has_top_temporal_pipe,
                 y_half_cube_spec=y_spec,
             )
         if not cube.is_spatial:
             return CubeSpec(
                 cube.kind,
                 has_spatial_up_or_down_pipe_in_timeslice=has_spatial_up_or_down_pipe_in_timeslice,
+                has_bottom_temporal_pipe=has_bottom_temporal_pipe,
+                has_top_temporal_pipe=has_top_temporal_pipe,
             )
         spatial_arms = SpatialArms.from_cube_in_graph(cube, graph)
-        return CubeSpec(cube.kind, spatial_arms, has_spatial_up_or_down_pipe_in_timeslice)
+        return CubeSpec(
+            cube.kind,
+            spatial_arms,
+            has_spatial_up_or_down_pipe_in_timeslice=has_spatial_up_or_down_pipe_in_timeslice,
+            has_bottom_temporal_pipe=has_bottom_temporal_pipe,
+            has_top_temporal_pipe=has_top_temporal_pipe,
+        )
 
     @property
     def pipe_dimensions(self) -> frozenset[Literal[Direction3D.X, Direction3D.Y]]:
