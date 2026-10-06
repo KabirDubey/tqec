@@ -8,6 +8,9 @@ computed in a window smaller than the patch are not deterministic.
 """
 
 import pytest
+import stim
+from tqecd.cover import find_commuting_cover_on_target_qubits
+from tqecd.pauli import PauliString
 
 from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
 from tqec.compile.blocks.layers.composed.sequenced import SequencedLayers
@@ -25,7 +28,17 @@ from tqec.utils.scale import LinearFunction
 
 
 def _y_memory() -> BlockGraph:
+    """Y memory joined by a ``ZXO`` pipe: the half cube's top boundary is ``X``."""
     return memory(PauliBasis.Y)
+
+
+def _y_memory_ztop() -> BlockGraph:
+    """Y memory joined by an ``XZO`` pipe: the half cube's top boundary is ``Z``."""
+    g = BlockGraph("Y memory, Z top")
+    bottom = g.add_cube(Position3D(0, 0, 0), "Y")
+    top = g.add_cube(Position3D(0, 0, 1), "Y")
+    g.add_pipe(bottom, top, "XZO")
+    return g
 
 
 def _y_above_two_cubes() -> BlockGraph:
@@ -43,17 +56,52 @@ def _s_gate(basis: PauliBasis) -> BlockGraph:
     return s_gate_teleportation(basis)
 
 
+def _tqecd_finds_minimal_commuting_covers() -> bool:
+    """Whether the installed ``tqecd`` merges anticommuting flows with the fewest stabilizers.
+
+    ``tqecd.cover.find_commuting_cover_on_target_qubits`` of tqecd 0.2.1 returns the first
+    linear dependency it meets in source order, which is not always the smallest cover. On the
+    example below it returns three stabilizers, ``[0, 1, 2]``, where ``Z0*Z1*Z2 * Z0*X1*Z2 = Y1``
+    already commutes with ``Y0*Y1*Y2``. tqecd PR #74 (https://github.com/tqec/tqecd/pull/74)
+    returns the minimal cover ``[2, 3]``. The surplus stabilizers of a non-minimal cover are
+    flows that other detectors need, so with tqecd 0.2.1 a Y half cube whose top boundary is
+    ``Z`` (joined by an ``XZO`` pipe) misses detectors in its SWITCH round and has distance 1.
+    The ``X``-top half cube (``ZXO`` pipe) keeps full distance only because its sources happen
+    to come in an order whose first dependency is minimal.
+    """
+
+    def pauli(text: str) -> PauliString:
+        return PauliString.from_stim_pauli_string(stim.PauliString(text))
+
+    cover = find_commuting_cover_on_target_qubits(
+        pauli("YYY"), [pauli("_XZ"), pauli("Z__"), pauli("ZZZ"), pauli("ZXZ")]
+    )
+    return cover is not None and len(cover) == 2
+
+
+NEEDS_MINIMAL_COVER = pytest.mark.xfail(
+    condition=not _tqecd_finds_minimal_commuting_covers(),
+    reason="tqecd 0.2.1 merges anticommuting flows with non-minimal covers (fixed in tqecd #74)",
+    strict=True,
+)
+
 GRAPHS = {
     "y_memory": _y_memory,
+    "y_memory_ztop": _y_memory_ztop,
     "s_gate_x": lambda: _s_gate(PauliBasis.X),
     "s_gate_z": lambda: _s_gate(PauliBasis.Z),
     "y_above_two_cubes": _y_above_two_cubes,
 }
-# Where a Y half cube is joined to an ``XZO`` pipe, tqecd 0.2.1 misses the weight-3 detectors on
-# the SWITCH round's domain wall, which leaves a weight-1 logical error at every k. tqecd PR #74
-# (https://github.com/tqec/tqecd/pull/74) finds them and gives full distance; until tqec requires
-# a tqecd release with it, only determinism is asserted for these gadgets.
-FULL_DISTANCE = {"y_memory", "s_gate_z"}
+# Gadgets where a Y half cube has a ``Z`` top boundary (joined by an ``XZO`` pipe). Their full
+# distance needs the minimal commuting cover of tqecd PR #74; see
+# ``_tqecd_finds_minimal_commuting_covers``.
+Z_TOP = {"y_memory_ztop", "s_gate_x", "y_above_two_cubes"}
+
+
+def _graph_params(names: list[str]) -> list:
+    return [
+        pytest.param(name, marks=[NEEDS_MINIMAL_COVER] if name in Z_TOP else []) for name in names
+    ]
 
 
 def test_measurement_half_cube_emits_first_pad_round_outside_the_repetition() -> None:
@@ -81,21 +129,27 @@ def test_constant_pad_repetitions_below_one_are_rejected() -> None:
         get_y_half_cube_block(spec, pad_repetitions=LinearFunction(0, 0))
 
 
-@pytest.mark.slow
-@pytest.mark.timeout(0)
-@pytest.mark.parametrize("k", [2])
-@pytest.mark.parametrize("name", list(GRAPHS))
-def test_native_detectors_are_deterministic_with_full_distance(name: str, k: int) -> None:
-    graph = GRAPHS[name]()
+def _assert_deterministic_with_full_distance(graph: BlockGraph, k: int) -> None:
     compiled = compile_block_graph(graph, FIXED_BULK_CONVENTION)
     circuit = compiled.generate_stim_circuit(k, database_path=None)
     # Raises a ValueError if any detector is non-deterministic.
     circuit.detector_error_model()
-
-    if name not in FULL_DISTANCE:
-        return
     noisy = NoiseModel.uniform_depolarizing(1e-3).noisy_circuit(circuit)
     error = noisy.shortest_graphlike_error(
         ignore_ungraphlike_errors=False, canonicalize_circuit_errors=True
     )
     assert len(error) == 2 * k + 1
+
+
+@pytest.mark.timeout(0)
+@pytest.mark.parametrize("name", _graph_params(["y_memory", "y_memory_ztop"]))
+def test_y_memory_has_full_distance_in_both_orientations(name: str) -> None:
+    _assert_deterministic_with_full_distance(GRAPHS[name](), k=1)
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(0)
+@pytest.mark.parametrize("k", [2])
+@pytest.mark.parametrize("name", _graph_params(list(GRAPHS)))
+def test_native_detectors_are_deterministic_with_full_distance(name: str, k: int) -> None:
+    _assert_deterministic_with_full_distance(GRAPHS[name](), k)
