@@ -21,6 +21,30 @@ DATA_DIR = Path(__file__).resolve().parent / "data" / "y_half_cube"
 """Directory of the ``.bgraph`` files."""
 
 _BLOCKED_BY = ("https://github.com/tqec/tqec/pull/719", "kd/y-half-cube-gen")
+_TQECD_74 = "https://github.com/tqec/tqecd/pull/74"
+_NEEDS_TQECD_74 = frozenset(
+    {
+        "g01",
+        "g02",
+        "g04",
+        "g06",
+        "g08",
+        "g09",
+        "g10",
+        "g11_ztop",
+        "g12_ztop",
+        "s_gate_x",
+        "s_gate_y",
+        "ymem_ztop",
+    }
+)
+"""Gadgets (by name after ``y_half_cube_``) with distance 1 at k=1 and k=2 under tqecd 0.2.1.
+
+tqecd 0.2.1 merges anticommuting flows with a non-minimal commuting cover, which drops detectors
+of the Y SWITCH round; tqecd PR #74 returns the minimal cover. On ``kd/y-half-cube-gen``
+(5f86d3039) all 24 Y gadgets reach 2k+1 at k=1 and k=2 with #74; these 12 are 1 with 0.2.1.
+"""
+_TQECD_74_NOTE = "Distance 1 with tqecd 0.2.1 (non-minimal commuting cover); 2k+1 with tqecd #74."
 
 _TAGS: dict[str, frozenset[str]] = {
     "g01": frozenset({"time:y:meas", "time:y:hadamard_pipe:zxoh", "time:y:junction_arm"}),
@@ -69,6 +93,11 @@ def _top_tags(top: frozenset[str]) -> frozenset[str]:
 
 
 def _register(gadget_id: str, file_name: str, tags: frozenset[str], notes: str) -> None:
+    name = gadget_id.removeprefix("y_half_cube_")
+    blocked_by = _BLOCKED_BY
+    if name in _NEEDS_TQECD_74:
+        blocked_by += (_TQECD_74,)
+        notes = f"{notes} {_TQECD_74_NOTE}".strip()
     register(
         GadgetSpec(
             id=gadget_id,
@@ -77,7 +106,7 @@ def _register(gadget_id: str, file_name: str, tags: frozenset[str], notes: str) 
             mechanisms=tags | {"space:y:twist"},
             # Y raises NotImplementedError on main (fixed_bulk.py:88-90).
             expected=COMPILE_FAILED,
-            blocked_by=_BLOCKED_BY,
+            blocked_by=blocked_by,
             notes=notes,
         )
     )
