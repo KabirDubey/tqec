@@ -60,11 +60,7 @@ def two_track_graph() -> BlockGraph:
 
 
 def sparse_z_graph() -> BlockGraph:
-    """Two memories at z=0 and z=5 with no pipe; checks time gap handling.
-
-    Sparse z slices (with gaps between components) crash to_layer_tree with
-    "SequencedLayers expected at least one layer. Found 0."
-    """
+    """Two memories at z=0 and z=5 with no pipe; checks time gap handling."""
     g = BlockGraph("sparse_z")
     for z in (0, 5):
         g.add_cube(Position3D(0, 0, z), ZXCube.from_str("ZXZ"))
@@ -178,25 +174,27 @@ def test_two_track_deterministic_at_k1(tmp_path: Path) -> None:
     assert distance == 3, f"Expected distance 3, got {distance}"
 
 
-def test_sparse_z_gap_crash(tmp_path: Path) -> None:
-    """Test sparse z: two memories at z=0 and z=5 with gap in between.
+def test_sparse_z_gap_compiles(tmp_path: Path) -> None:
+    """Test sparse z: two memories at z=0 and z=5 with a gap in between.
 
-    Sparse z slices (with gaps between components) crash to_layer_tree with
-    "SequencedLayers expected at least one layer. Found 0." The error is caught
-    and recorded as a circuit failure. This is expected until SHIFT_COORDS policy
-    is settled.
+    Each z-slice subtree is annotated at its block-graph z, so the gap compiles to
+    one circuit with one observable per component.
     """
     config = BatchConfig(conventions=("fixed_bulk",), ks=(1,), max_shots=100)
     manifest = prepare_batch([sparse_z_graph()], config, tmp_path / "run")
 
-    # The unit should fail at the circuit stage with TQECError
-    units = manifest.units
-    assert len(units) == 1
-    unit = units[0]
-    assert unit.terminal, "Sparse z graph should produce a terminal failure"
-    assert unit.stage == "circuit", f"Expected failure at circuit stage, got stage={unit.stage}"
-    assert "SequencedLayers" in unit.notes, f"Expected 'SequencedLayers' error, got: {unit.notes}"
-    assert unit.error == "TQECError", f"Expected TQECError, got error={unit.error}"
+    assert len(manifest.units) == 1
+    unit = manifest.units[0]
+    assert unit.status == UnitStatus.READY.value
+    assert manifest.run_dir is not None
+    circuit = stim.Circuit((manifest.run_dir / unit.circuits[1]).read_text())
+    assert circuit.num_observables == 2
+
+    det_samples = np.array(circuit.compile_detector_sampler().sample(100))
+    assert float(det_samples.mean()) == 0.0
+
+    noisy = NoiseModel.uniform_depolarizing(0.001).noisy_circuit(circuit)
+    assert len(noisy.shortest_graphlike_error()) == 3
 
 
 def test_split_components_yields_multiple_units_same_device_frame(tmp_path: Path) -> None:
