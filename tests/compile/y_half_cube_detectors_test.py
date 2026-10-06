@@ -1,8 +1,10 @@
 """Detectors that the native detector path finds for the fixed-bulk Y half cube.
 
 The Y half cube is built from a transition (SWITCH) round, ``REPEAT``ed padding (PAD) rounds and
-a readout (FINAL) round. The detectors of a ``REPEAT`` body are those of its first iteration, so
-the first PAD round must not be part of the repetition. This only shows from ``k = 2``.
+a readout (FINAL) round. Two properties only show from ``k = 2``. The detectors of a ``REPEAT``
+body are those of its first iteration, so the first PAD round must not be part of the
+repetition. The diagonal domain wall of the SWITCH round spans the whole patch, so detectors
+computed in a window smaller than the patch are not deterministic.
 """
 
 import pytest
