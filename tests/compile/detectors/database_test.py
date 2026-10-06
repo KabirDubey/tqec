@@ -7,8 +7,10 @@ import pytest
 from tqec.circuit.measurement import Measurement
 from tqec.circuit.qubit import GridQubit
 from tqec.compile.detectors.database import (
+    CURRENT_DATABASE_VERSION,
     DetectorDatabase,
     _DetectorDatabaseKey,  # pyright: ignore[reportPrivateUsage]
+    installed_tqecd_version,
 )
 from tqec.compile.detectors.detector import Detector
 from tqec.compile.specs.library.generators.fixed_bulk import (
@@ -215,3 +217,39 @@ def test_detector_database_dict() -> None:
     detectors1 = new_db.get_detectors(SUBTEMPLATES[:2], PLAQUETTE_COLLECTIONS[:2])
     assert detectors1 is not None
     assert detectors1 == DETECTORS[1]
+
+
+def test_detector_database_records_tqecd_version() -> None:
+    db = DetectorDatabase()
+    assert db.tqecd_version == installed_tqecd_version()
+    assert db.is_current()
+
+
+def test_detector_database_dict_keeps_tqecd_version() -> None:
+    db = DetectorDatabase()
+    db.tqecd_version = "0.0.1"
+    new_db = DetectorDatabase.from_dict(db.to_dict())
+    assert new_db.tqecd_version == "0.0.1"
+
+
+def test_detector_database_dict_without_tqecd_version() -> None:
+    db_dict = DetectorDatabase().to_dict()
+    del db_dict["tqecd_version"]
+    assert DetectorDatabase.from_dict(db_dict).tqecd_version == ""
+
+
+def test_detector_database_from_other_tqecd_is_not_current() -> None:
+    db = DetectorDatabase()
+    db.tqecd_version = installed_tqecd_version() + ".other"
+    assert db.version == CURRENT_DATABASE_VERSION
+    assert not db.is_current()
+
+
+def test_detector_database_old_pickle_is_not_current(tmp_path) -> None:
+    db = DetectorDatabase()
+    del db.tqecd_version  # as a database pickled before the attribute existed
+    path = tmp_path / "old.pkl"
+    db.to_file(path)
+    loaded = DetectorDatabase.from_file(path)
+    assert loaded.tqecd_version == ""
+    assert not loaded.is_current() or installed_tqecd_version() == ""

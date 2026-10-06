@@ -6,7 +6,9 @@ import pickle
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from functools import cached_property
+from functools import cache, cached_property
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 from pathlib import Path
 from typing import Any, ClassVar, Final
 
@@ -28,6 +30,19 @@ from tqec.utils.exceptions import TQECError
 from tqec.utils.position import Shift2D
 
 CURRENT_DATABASE_VERSION: Final[semver.Version] = semver.Version(1, 0, 0)
+
+
+@cache
+def installed_tqecd_version() -> str:
+    """Return the version of the installed ``tqecd`` package, or ``""`` if it is not installed.
+
+    The detectors stored in a :class:`DetectorDatabase` are computed by ``tqecd``. A database
+    filled by another ``tqecd`` version can hold detectors that this version would not compute.
+    """
+    try:
+        return package_version("tqecd")
+    except PackageNotFoundError:
+        return ""
 
 
 @dataclass(frozen=True)
@@ -284,6 +299,7 @@ def _get_database_format(filepath: Path) -> str:
 
 class DetectorDatabase:
     version: semver.Version = semver.Version(0, 0, 0)
+    tqecd_version: str = ""
 
     _READERS: ClassVar[Mapping[str, Callable[[Path], DetectorDatabase]]] = {
         "pickle": _DetectorDatabaseIO.from_pickle_file,
@@ -320,12 +336,27 @@ class DetectorDatabase:
         loaded with the default value of .version, without passing through __init__,
         ie (0,0,0).
 
+        The attribute ``tqecd_version`` records the version of ``tqecd`` that computed the
+        stored detectors. Databases saved before it existed load with ``""``.
+
         """
         if mapping is None:
             mapping = dict()
         self.mapping = mapping
         self.frozen = frozen
         self.version = CURRENT_DATABASE_VERSION
+        self.tqecd_version = installed_tqecd_version()
+
+    def is_current(self) -> bool:
+        """Return whether the database can be used by the running code.
+
+        The database must have the current format version and its detectors must have been
+        computed by the installed ``tqecd`` version.
+        """
+        return (
+            self.version == CURRENT_DATABASE_VERSION
+            and self.tqecd_version == installed_tqecd_version()
+        )
 
     def add_situation(
         self,
@@ -467,6 +498,7 @@ class DetectorDatabase:
             ],
             "frozen": self.frozen,
             "uniq_plaquettes": [p.to_dict() for p in uniq_plaquettes],
+            "tqecd_version": self.tqecd_version,
         }
 
     @staticmethod
@@ -488,7 +520,9 @@ class DetectorDatabase:
             )
             for key, detectors in data["mapping"]
         }
-        return DetectorDatabase(mapping, data["frozen"])
+        database = DetectorDatabase(mapping, data["frozen"])
+        database.tqecd_version = str(data.get("tqecd_version", ""))
+        return database
 
     def to_file(self, filepath: Path) -> None:
         """Save the database to a file.
