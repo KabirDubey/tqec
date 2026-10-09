@@ -17,15 +17,23 @@ repository root:
 To get that checkout:
 
     git clone -b feat/yfragmentflow https://github.com/KabirDubey/tqecd.git <path>
-    # or, in an existing clone: git fetch origin feat/yfragmentflow && git checkout feat/yfragmentflow
+
+or, in an existing clone:
+
+    git fetch origin feat/yfragmentflow && git checkout feat/yfragmentflow
 
 (or `export PYTHONPATH=<tqecd checkout>/src`). The script uses a fresh detector database, since a database made
 by tqecd 0.2.1 hides the fix.
 
 Commands, from the repository root:
 
-    .venv/bin/python examples/y_demo/batch_demo.py --ks 1 --shots 300 --ps 1e-3   # quick check, about 1 min
-    .venv/bin/python examples/y_demo/batch_demo.py                                # k=1,2, p=1e-3,3e-3, 2000 shots
+Quick check (k=1, about 1 min):
+
+    .venv/bin/python examples/y_demo/batch_demo.py --ks 1 --shots 300 --ps 1e-3
+
+Default run (k=1,2, p=1e-3,3e-3, 2000 shots):
+
+    .venv/bin/python examples/y_demo/batch_demo.py
 
 Options: `--ks`, `--ps`, `--shots`, `--workers`, `--out DIR` (keep the run directory with `manifest.json`,
 `results.json` and the `.stim` circuits).
@@ -35,13 +43,16 @@ Options: `--ks`, `--ps`, `--shots`, `--workers`, `--out DIR` (keep the run direc
 `examples/y_demo/registry_demo.py` shows the gadget registry feeding the batch interface: pick gadgets with
 `tqec.benchmarks.gadgets.iter_gadgets(...)` (here every `y_half_cube` gadget, plus the `memory` and `junction` gadgets
 with chosen tags), write them out with `vend(...)`, run `prepare_batch` and `simulate_batch` in the fixed bulk
-convention, and print per unit: the status the registry expects, the status the batch observed, the circuit-level
-distance against `2k+1` and the sinter error count. A row marked `<- differs` is a gadget whose registry
-expectation no longer matches (the registry on `main` lists the Y gadgets as `compile_failed`; with the Y branches
-merged they compile).
+convention, and print per unit: the status the batch observed on this branch, the circuit-level distance against
+`2k+1` and the sinter error count.
 
-    .venv/bin/python examples/y_demo/registry_demo.py --ks 1 --shots 200      # small check
-    .venv/bin/python examples/y_demo/registry_demo.py                          # k=1,2, p=1e-3, 500 shots
+k=1 only (about 13 min on a laptop):
+
+    .venv/bin/python examples/y_demo/registry_demo.py --ks 1 --shots 200
+
+Default run (k=1,2, p=1e-3, 500 shots):
+
+    .venv/bin/python examples/y_demo/registry_demo.py
 
 Options: `--ks`, `--p`, `--shots`, `--workers`, `--out DIR`. The setup is the one above (tqecd with the Y fragment
 flow, fresh detector database).
