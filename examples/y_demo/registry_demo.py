@@ -1,9 +1,9 @@
-"""Registry to batch: select gadgets from the registry, vend them, run the batch, compare.
+"""Registry to batch: select gadgets from the registry, vend them, run the batch, report.
 
 The user picks gadgets with ``tqec.benchmarks.gadgets.iter_gadgets`` (family, tags), ``vend`` turns
 them into ``prepare_batch`` inputs, and ``prepare_batch`` / ``simulate_batch`` run them in the
-fixed bulk convention. For every unit the script prints the status the registry expects, the
-status the batch observed, the circuit-level distance against ``2k+1`` and the sinter errors.
+fixed bulk convention. For every unit the script prints the status the batch observed on this
+branch, the circuit-level distance against ``2k+1`` and the sinter errors.
 
 Run: ``python examples/y_demo/registry_demo.py --ks 1,2 --shots 500`` (see README.md).
 """
@@ -47,8 +47,7 @@ def main() -> None:
         *iter_gadgets(family="memory", mechanisms=["time:memory:x"]),
         *iter_gadgets(family="junction", mechanisms=["time:stability:x"]),
     ]
-    expected = {spec.id: spec.expected[CONVENTION] for spec in specs}
-    print(f"selected {len(specs)} gadgets: {', '.join(expected)}")
+    print(f"selected {len(specs)} gadgets: {', '.join(spec.id for spec in specs)}")
 
     # 2. Vend and batch, fixed bulk only.
     config = BatchConfig(
@@ -58,20 +57,18 @@ def main() -> None:
     result = simulate_batch(run_dir, num_workers=args.workers)
     errors = {(r.gadget_id, r.k): f"{r.errors}/{r.shots}" for r in result.results}
 
-    # 3. Compare registry expectation with what the batch observed.
+    # 3. Report what the batch observed on this branch.
     print(f"\nrun dir {run_dir}; p={args.p:g}; distance = circuit-level, expected 2k+1")
-    print(f"{'gadget':26} {'expected':15} {'observed':15} k  {'dist':>4} {'2k+1':>4}  errors")
+    print(f"{'gadget':26} {'status':15} k  {'dist':>4} {'2k+1':>4}  errors")
     for unit in manifest.units:
-        status = unit.status
-        want = expected[unit.name]  # unit.name is the registry id; gadget_id has an s00_ prefix
-        same = "" if status == want else "  <- differs"
+        # unit.name is the registry id; gadget_id has an s00_ prefix
         if not unit.circuits:
-            print(f"{unit.name:26} {want:15} {status:15} -{same}")
+            print(f"{unit.name:26} {unit.status:15} -")
             continue
         for k, rel in sorted(unit.circuits.items()):
             d = fault_distance(stim.Circuit.from_file(run_dir / rel), args.p)
             err = errors.get((unit.gadget_id, k), "-")
-            print(f"{unit.name:26} {want:15} {status:15} {k}  {d:>4} {2 * k + 1:>4}  {err}{same}")
+            print(f"{unit.name:26} {unit.status:15} {k}  {d:>4} {2 * k + 1:>4}  {err}")
 
 
 if __name__ == "__main__":
