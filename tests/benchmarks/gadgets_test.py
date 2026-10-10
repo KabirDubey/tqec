@@ -106,13 +106,21 @@ def test_every_spec_builds_a_valid_graph(spec: GadgetSpec) -> None:
     graph = build_graph(spec)
     assert isinstance(graph, BlockGraph)
     graph.validate()
-    if spec.expected["fixed_bulk"] != "ready" or spec.family == "y_half_cube":
-        assert spec.blocked_by or spec.expected["fixed_bulk"] != "ready"
 
 
 def test_non_ready_specs_state_what_blocks_them() -> None:
     for spec in iter_gadgets(family="y_half_cube"):
-        assert spec.blocked_by
+        if spec.expected["fixed_bulk"] != "ready":
+            assert spec.blocked_by, spec.id
+
+
+def test_y_gadgets_that_need_tqecd_74_say_so() -> None:
+    needs_74 = {
+        s.id
+        for s in iter_gadgets(family="y_half_cube")
+        if any("tqecd/pull/74" in b for b in s.blocked_by)
+    }
+    assert len(needs_74) == 12
 
 
 def test_y_files_exist_and_ids_have_no_gaps() -> None:

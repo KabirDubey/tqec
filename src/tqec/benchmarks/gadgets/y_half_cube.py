@@ -21,7 +21,6 @@ from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 DATA_DIR = Path(__file__).resolve().parent / "data" / "y_half_cube"
 """Directory of the ``.bgraph`` files."""
 
-_BLOCKED_BY = ("https://github.com/tqec/tqec/pull/719", "kd/y-half-cube-gen")
 _TQECD_74 = "https://github.com/tqec/tqecd/pull/74"
 _NEEDS_TQECD_74 = frozenset(
     {
@@ -95,9 +94,9 @@ def _top_tags(top: frozenset[str]) -> frozenset[str]:
 
 def _register(gadget_id: str, file_name: str, tags: frozenset[str], notes: str) -> None:
     name = gadget_id.removeprefix("y_half_cube_")
-    blocked_by = _BLOCKED_BY
+    blocked_by: tuple[str, ...] = ()
     if name in _NEEDS_TQECD_74:
-        blocked_by += (_TQECD_74,)
+        blocked_by = (_TQECD_74,)
         notes = f"{notes} {_TQECD_74_NOTE}".strip()
     register(
         GadgetSpec(
