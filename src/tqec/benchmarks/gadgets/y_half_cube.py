@@ -15,7 +15,7 @@ was dropped and the later gadgets were re-indexed: the old ``g06`` to ``g12`` ar
 
 from pathlib import Path
 
-from tqec.benchmarks.gadgets._common import COMPILE_FAILED
+from tqec.benchmarks.gadgets._common import READY
 from tqec.benchmarks.gadgets.spec import GadgetSpec, register
 
 DATA_DIR = Path(__file__).resolve().parent / "data" / "y_half_cube"
@@ -105,8 +105,9 @@ def _register(gadget_id: str, file_name: str, tags: frozenset[str], notes: str) 
             build=lambda: DATA_DIR / file_name,
             family="y_half_cube",
             mechanisms=tags | {"space:y:twist"},
-            # Y raises NotImplementedError on main (fixed_bulk.py:88-90).
-            expected=COMPILE_FAILED,
+            # Ready on this branch, which merges the Y generator of kd/y-half-cube-gen. On main Y
+            # raises NotImplementedError (fixed_bulk.py:87-88), so this is compile_failed there.
+            expected=READY,
             blocked_by=blocked_by,
             notes=notes,
         )
