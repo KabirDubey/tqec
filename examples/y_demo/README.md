@@ -34,17 +34,13 @@ Run these from the repository root, in one shell. Everything is written under `y
        mkdir -p y_demo_run
        export TQEC_DETECTOR_DATABASE_PATH=$PWD/y_demo_run/detector_db.pkl
 
-2. List the gadgets from the registry (id, family, expected status per convention, tags):
-
-       .venv/bin/python -m tqec.benchmarks.gadgets --family y_half_cube
-       .venv/bin/python -m tqec.benchmarks.gadgets --family memory --mechanism time:memory:x
-
-3. Export them as `.bgraph` files, the batch's input:
+2. Select the gadgets in the registry by family and tag and export them as `.bgraph` files, the batch's input:
 
        .venv/bin/python -m tqec.benchmarks.gadgets --family y_half_cube --export y_demo_run/gadgets
        .venv/bin/python -m tqec.benchmarks.gadgets --family memory --mechanism time:memory:x --export y_demo_run/gadgets
+       ls y_demo_run/gadgets
 
-4. Write the batch configuration. These are `BatchConfig` fields; the ones left out keep their defaults. `ks` and
+3. Write the batch configuration. These are `BatchConfig` fields; the ones left out keep their defaults. `ks` and
    `conventions` drive circuit generation; `ps`, `noise_models`, `decoders` and `max_shots` drive sinter.
 
        cat > y_demo_run/config.json <<'EOF'
@@ -53,7 +49,7 @@ Run these from the repository root, in one shell. Everything is written under `y
         "max_shots": 2000, "max_errors": null}
        EOF
 
-5. Generate the circuits. `prepare_batch` compiles every gadget at every k into a noiseless circuit under
+4. Generate the circuits. `prepare_batch` compiles every gadget at every k into a noiseless circuit under
    `y_demo_run/batch/circuits` and writes `y_demo_run/batch/manifest.json`, which records the configuration, so the
    next stage needs only the run directory:
 
@@ -69,17 +65,13 @@ Run these from the repository root, in one shell. Everything is written under `y
            print(f"{unit.name:26} {unit.status:15} k={sorted(unit.circuits)}")
        EOF
 
-6. Run sinter. `simulate_batch` applies the noise model to every prepared circuit, runs one `sinter.collect` over
-   the whole batch and writes `y_demo_run/batch/results.json`:
+5. Run sinter. `simulate_batch` applies the noise model to every prepared circuit, runs one `sinter.collect` over
+   the whole batch and writes `y_demo_run/batch/results.json`. Run it with `-c`, not from standard input: sinter's
+   worker processes re-import the main script and cannot import `<stdin>`.
 
-       .venv/bin/python - <<'EOF'
-       from tqec.orchestration import simulate_batch
+       .venv/bin/python -c 'from tqec.orchestration import simulate_batch; r = simulate_batch("y_demo_run/batch"); print(r.aggregate, len(r.results), "results,", len(r.failures), "failures")'
 
-       result = simulate_batch("y_demo_run/batch")
-       print(result.aggregate, len(result.results), "results,", len(result.failures), "failures")
-       EOF
-
-7. Report, from the two files: the status each gadget reached, the circuit-level distance of each circuit against
+6. Report, from the two files: the status each gadget reached, the circuit-level distance of each circuit against
    `2k+1` (minimum graphlike logical error, all observables) and the sinter error count at each p.
 
        .venv/bin/python - <<'EOF'
