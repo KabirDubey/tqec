@@ -1,58 +1,112 @@
-# Y batch demo
+# Y gadgets through the batch pipeline
 
-Shows how `tqec.orchestration` (batch processing) handles Y gadgets in its default mode: one circuit per
-input, relative placement kept, each connected component with its own observables.
+One sequence of shell commands that takes gadgets from the gadget registry (`tqec.benchmarks.gadgets`) through
+every stage of batch processing (`tqec.orchestration`): select and export the gadgets, write the batch
+configuration, generate the circuits (`prepare_batch`, writing `manifest.json`), run sinter over the whole batch
+(`simulate_batch`, writing `results.json`), and read both back with the circuit-level distance of every circuit.
 
-It builds a Y memory, the S gate (X and Z) and a multi-component graph holding all three placed apart. It prints
-each component's bounding box and observables, checks the circuit-level fault distance of every circuit against `2k+1` (the minimum graphlike logical distance over
-all observables, and per observable by keeping only that observable), runs a small sinter batch, and shows that
-`BlockGraph` construction rejects overlapping cubes (`TQECError`) before batching.
+The gadgets are every Y half cube gadget in the registry, plus the X memory gadgets as a control.
 
-Setup (branch `kd/y-demo`; it needs tqecd PR #74 with the Y fragment flow, which is not in a release yet), from the
-repository root:
+## Setup
 
+You need git and [uv](https://docs.astral.sh/uv/). The Y gadgets need tqecd PR #74 (the Y fragment flow), which is
+not in a release yet; the released tqecd 0.2.1 gives them distance 1.
+
+    git clone -b kd/y-demo https://github.com/KabirDubey/tqec.git tqec
+    git clone -b feat/yfragmentflow https://github.com/KabirDubey/tqecd.git tqecd
+    cd tqec
     uv sync
-    uv pip install --python .venv/bin/python -e <path to a tqecd checkout of KabirDubey/tqecd feat/yfragmentflow>
+    uv pip install --python .venv/bin/python -e ../tqecd
 
-To get that checkout:
+Check that Python loads tqecd from the checkout (the path ends in `tqecd/src/tqecd/__init__.py`):
 
-    git clone -b feat/yfragmentflow https://github.com/KabirDubey/tqecd.git <path>
+    .venv/bin/python -c "import tqecd; print(tqecd.__file__)"
 
-or, in an existing clone:
+Run everything with `.venv/bin/python`, not `uv run`: `uv run` syncs the environment back to the lockfile and
+reinstalls tqecd 0.2.1.
 
-    git fetch origin feat/yfragmentflow && git checkout feat/yfragmentflow
+## Commands
 
-(or `export PYTHONPATH=<tqecd checkout>/src`). The script uses a fresh detector database, since a database made
-by tqecd 0.2.1 hides the fix.
+Run these from the repository root, in one shell. Everything is written under `y_demo_run/`.
 
-Commands, from the repository root:
+1. Use a fresh detector database (a database made by tqecd 0.2.1 hides the Y fix):
 
-Quick check (k=1, about 1 min):
+       mkdir -p y_demo_run
+       export TQEC_DETECTOR_DATABASE_PATH=$PWD/y_demo_run/detector_db.pkl
 
-    .venv/bin/python examples/y_demo/batch_demo.py --ks 1 --shots 300 --ps 1e-3
+2. List the gadgets from the registry (id, family, expected status per convention, tags):
 
-Default run (k=1,2, p=1e-3,3e-3, 2000 shots):
+       .venv/bin/python -m tqec.benchmarks.gadgets --family y_half_cube
+       .venv/bin/python -m tqec.benchmarks.gadgets --family memory --mechanism time:memory:x
 
-    .venv/bin/python examples/y_demo/batch_demo.py
+3. Export them as `.bgraph` files, the batch's input:
 
-Options: `--ks`, `--ps`, `--shots`, `--workers`, `--out DIR` (keep the run directory with `manifest.json`,
-`results.json` and the `.stim` circuits).
+       .venv/bin/python -m tqec.benchmarks.gadgets --family y_half_cube --export y_demo_run/gadgets
+       .venv/bin/python -m tqec.benchmarks.gadgets --family memory --mechanism time:memory:x --export y_demo_run/gadgets
 
-## Registry to batch
+4. Write the batch configuration. These are `BatchConfig` fields; the ones left out keep their defaults. `ks` and
+   `conventions` drive circuit generation; `ps`, `noise_models`, `decoders` and `max_shots` drive sinter.
 
-`examples/y_demo/registry_demo.py` shows the gadget registry feeding the batch interface: pick gadgets with
-`tqec.benchmarks.gadgets.iter_gadgets(...)` (here every `y_half_cube` gadget, plus the `memory` and `junction` gadgets
-with chosen tags), write them out with `vend(...)`, run `prepare_batch` and `simulate_batch` in the fixed bulk
-convention, and print per unit: the status the batch observed on this branch, the circuit-level distance against
-`2k+1` and the sinter error count.
+       cat > y_demo_run/config.json <<'EOF'
+       {"conventions": ["fixed_bulk"], "ks": [1, 2], "ps": [0.001, 0.003],
+        "noise_models": ["uniform_depolarizing"], "decoders": ["pymatching"],
+        "max_shots": 2000, "max_errors": null}
+       EOF
 
-k=1 only (about 13 min on a laptop):
+5. Generate the circuits. `prepare_batch` compiles every gadget at every k into a noiseless circuit under
+   `y_demo_run/batch/circuits` and writes `y_demo_run/batch/manifest.json`, which records the configuration, so the
+   next stage needs only the run directory:
 
-    .venv/bin/python examples/y_demo/registry_demo.py --ks 1 --shots 200
+       .venv/bin/python - <<'EOF'
+       import json
+       from pathlib import Path
+       from tqec.orchestration import BatchConfig, prepare_batch
 
-Default run (k=1,2, p=1e-3, 500 shots):
+       config = BatchConfig.from_dict(json.loads(Path("y_demo_run/config.json").read_text()))
+       gadgets = sorted(Path("y_demo_run/gadgets").glob("*.bgraph"))
+       manifest = prepare_batch(gadgets, config, "y_demo_run/batch")
+       for unit in manifest.units:
+           print(f"{unit.name:26} {unit.status:15} k={sorted(unit.circuits)}")
+       EOF
 
-    .venv/bin/python examples/y_demo/registry_demo.py
+6. Run sinter. `simulate_batch` applies the noise model to every prepared circuit, runs one `sinter.collect` over
+   the whole batch and writes `y_demo_run/batch/results.json`:
 
-Options: `--ks`, `--p`, `--shots`, `--workers`, `--out DIR`. The setup is the one above (tqecd with the Y fragment
-flow, fresh detector database).
+       .venv/bin/python - <<'EOF'
+       from tqec.orchestration import simulate_batch
+
+       result = simulate_batch("y_demo_run/batch")
+       print(result.aggregate, len(result.results), "results,", len(result.failures), "failures")
+       EOF
+
+7. Report, from the two files: the status each gadget reached, the circuit-level distance of each circuit against
+   `2k+1` (minimum graphlike logical error, all observables) and the sinter error count at each p.
+
+       .venv/bin/python - <<'EOF'
+       import stim
+       from tqec.orchestration import BatchManifest, BatchResult
+       from tqec.utils.noise_model import NoiseModel
+
+       run = "y_demo_run/batch"
+       manifest = BatchManifest.read(run)
+       errors = {(r.gadget_id, r.k, r.p): f"{r.errors}/{r.shots}" for r in BatchResult.read(run).results}
+       print(f"{'gadget':26} {'status':8} k  dist 2k+1  p      errors")
+       for unit in manifest.units:
+           if not unit.circuits:
+               print(f"{unit.name:26} {unit.status}")
+           for k, rel in sorted(unit.circuits.items()):
+               circuit = stim.Circuit.from_file(manifest.run_dir / rel)
+               noisy = NoiseModel.uniform_depolarizing(1e-3).noisy_circuit(circuit)
+               error = noisy.shortest_graphlike_error(
+                   ignore_ungraphlike_errors=False, canonicalize_circuit_errors=True
+               )
+               for p in manifest.config.ps:
+                   count = errors.get((unit.gadget_id, k, p), "-")
+                   print(f"{unit.name:26} {unit.status:8} {k}  {len(error):>4} {2 * k + 1:>4}  {p:<6g} {count}")
+       EOF
+
+## What to expect
+
+Every gadget reaches `ready`, with distance 3 at k=1 and 5 at k=2. The statuses and distances are the same on every
+run. The sinter error counts are statistical (sinter is not seeded), so they change from run to run within shot
+noise; at p=0.001 they fall from k=1 to k=2.
