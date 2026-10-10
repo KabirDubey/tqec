@@ -9,7 +9,7 @@ The gadgets are every Y half cube gadget in the registry, plus the X memory gadg
 
 ## Setup
 
-You need git and [uv](https://docs.astral.sh/uv/). The Y gadgets need tqecd PR #74 (the Y fragment flow), which is
+You need git and [uv](https://docs.astral.sh/uv/). The Y gadgets need tqecd PR #74, which is
 not in a release yet; the released tqecd 0.2.1 gives them distance 1.
 
     git clone -b kd/y-demo https://github.com/KabirDubey/tqec.git tqec
@@ -18,12 +18,11 @@ not in a release yet; the released tqecd 0.2.1 gives them distance 1.
     uv sync
     uv pip install --python .venv/bin/python -e ../tqecd
 
-Check that Python loads tqecd from the checkout (the path ends in `tqecd/src/tqecd/__init__.py`):
+Check that Python loads tqecd from the checkout (the path ends in `tqecd/src/tqecd/__init__.py`)
 
     .venv/bin/python -c "import tqecd; print(tqecd.__file__)"
 
-Run everything with `.venv/bin/python`, not `uv run`: `uv run` syncs the environment back to the lockfile and
-reinstalls tqecd 0.2.1.
+Run everything with `.venv/bin/python`, not `uv run`: `uv run` syncs the environment back to the lockfile and reinstalls tqecd 0.2.1.
 
 ## Commands
 
