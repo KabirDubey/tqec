@@ -50,9 +50,15 @@ Run these from the repository root, in one shell. Everything is written under `y
 
 4. Generate the circuits. `prepare_batch` compiles every gadget at every k into a noiseless circuit under
    `y_demo_run/batch/circuits` and writes `y_demo_run/batch/manifest.json`, which records the configuration, so the
-   next stage needs only the run directory:
+   next stage needs only the run directory.
 
-       .venv/bin/python - <<'EOF'
+   Run it with `-c`, not from standard input or from a script file. With a fresh detector database, tqec computes
+   detectors in a pool of worker processes. On macOS (and on Windows) these workers start by re-importing the main
+   script: they cannot import `<stdin>`, and a script file with no `if __name__ == "__main__":` guard runs
+   `prepare_batch` again in every worker, which fails with "An attempt has been made to start a new process before
+   the current process has finished its bootstrapping phase". With `-c` there is no main script to re-import.
+
+       .venv/bin/python -c '
        import json
        from pathlib import Path
        from tqec.orchestration import BatchConfig, prepare_batch
@@ -62,11 +68,14 @@ Run these from the repository root, in one shell. Everything is written under `y
        manifest = prepare_batch(gadgets, config, "y_demo_run/batch")
        for unit in manifest.units:
            print(f"{unit.name:26} {unit.status:15} k={sorted(unit.circuits)}")
-       EOF
+       '
+
+   If you prefer a script file (for example to run it from an IDE), put the code under
+   `if __name__ == "__main__":`.
 
 5. Run sinter. `simulate_batch` applies the noise model to every prepared circuit, runs one `sinter.collect` over
-   the whole batch and writes `y_demo_run/batch/results.json`. Run it with `-c`, not from standard input: sinter's
-   worker processes re-import the main script and cannot import `<stdin>`.
+   the whole batch and writes `y_demo_run/batch/results.json`. Run it with `-c` too: sinter's worker processes also
+   re-import the main script.
 
        .venv/bin/python -c 'from tqec.orchestration import simulate_batch; r = simulate_batch("y_demo_run/batch"); print(r.aggregate, len(r.results), "results,", len(r.failures), "failures")'
 
