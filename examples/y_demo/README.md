@@ -110,3 +110,28 @@ Run these from the repository root, in one shell. Everything is written under `y
 Every gadget reaches `ready`, with distance 3 at k=1 and 5 at k=2. The statuses and distances are the same on every
 run. The sinter error counts are statistical (sinter is not seeded), so they change from run to run within shot
 noise; at p=0.001 they fall from k=1 to k=2.
+
+## Y basis init and measurement circuits
+
+`y_init.stim` and `y_meas.stim`, next to this README, are the two halves of the gadget `y_half_cube_ymem` (one Y cube
+on another) at k=1, distance 3. They were made like the circuits of step 4 (fixed bulk, manhattan radius 2, tqecd
+#74), and the full circuit was cut between the two cubes, after its third round:
+
+- `y_init.stim`, the lower cube: the reset, one round, then the twist round, which resets qubit 8 in the Y
+  basis. At its end only the 9 data qubits 6, 7, 8, 13, 14, 15, 22, 23 and 24 are not measured.
+- `y_meas.stim`, the upper cube: the mirrored twist round, which holds `MY 8` and the observable
+  (`OBSERVABLE_INCLUDE(0)`), then one round and the final measurement. The 8 detectors that compare its first
+  round with the last round of `y_init.stim` are removed. `SHIFT_COORDS(0, 0, 3)` keeps the time coordinate of the
+  other detectors.
+
+These circuits are not deterministic on their own. You need an additional layer of operations to terminate their
+observables, such as a collection of data qubit MPPs. `y_init.stim` prepares the logical Y state but never measures
+it, so it has no observable. `y_meas.stim` measures an observable of a state that it does not prepare. For example,
+the logical operator at the cut is `Z7*X13*Y14*X15*Z23`. Append these two lines to `y_init.stim`, or put them
+followed by a `TICK` before the operations of `y_meas.stim`, and stim finds the observable deterministic
+(`detector_error_model(allow_gauge_detectors=False)`):
+
+    MPP Z7*X13*Y14*X15*Z23
+    OBSERVABLE_INCLUDE(0) rec[-1]
+
+This MPP does not restore the 8 removed detectors. For those, also measure the stabilizers at the cut.
