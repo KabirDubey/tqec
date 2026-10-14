@@ -9,8 +9,9 @@ The gadgets are every Y half cube gadget in the registry, plus the X memory gadg
 
 ## Setup
 
-You need git and [uv](https://docs.astral.sh/uv/). The Y gadgets need tqecd PR #74, which is
-not in a release yet; the released tqecd 0.2.1 gives them distance 1.
+You need git and [uv](https://docs.astral.sh/uv/). The commands are for a POSIX shell (bash or zsh, on macOS or
+Linux). On Windows, run them in [WSL](https://learn.microsoft.com/windows/wsl/install). The Y gadgets need tqecd
+PR #74, which is not in a release yet; the released tqecd 0.2.1 gives them distance 1.
 
     git clone -b kd/y-demo https://github.com/KabirDubey/tqec.git tqec
     git clone -b feat/yfragmentflow https://github.com/KabirDubey/tqecd.git tqecd
